@@ -1,0 +1,7 @@
+/WebAPITime/bin
+/WebAPITime/obj
+/.vs
+/WebAPI/obj
+/WebAPI/bin
+/WebAPI/.vs
+/WebAPITime/.config/dotnet-tools.json

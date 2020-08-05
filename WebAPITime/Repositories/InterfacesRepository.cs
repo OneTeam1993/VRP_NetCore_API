@@ -1,0 +1,70 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using VrpModel;
+using WebAPITime.Models;
+
+namespace WebApi.Repositories
+{
+    public interface IVrpRepository
+    {
+        IEnumerable<VrpInfo> GetAll(string RouteNo);
+        VrpAvailableTimeInfo GetAvailableTimeForAdhocOrder(string routeNo, long driverID);
+        IEnumerable<VrpInfo> CheckAdHocOrderFeasibility(string routeNo, long driverID, [FromBody] TempAdHocLocation tempAdHocLocation);
+        IEnumerable<VrpInfo> InsertAdHocOrder(string routeNo, long driverID, string pickupID, string deliveryID);
+        VrpInfo VRPCalculation(string routeNo, DataModel data, bool isCheckAdHocFeasibility = false, bool isInsertAdHoc = false, bool isRecalculateAfterDelete = false, List<RouteInfo> arrRouteInfo = null);
+    }
+
+    public interface IInitialLocationRepository
+    {
+        List<PickupDeliveryInfo> GetLocationInfo(string routeNo);
+        List<PickupDeliveryInfo> GetAssignedLocationInfoByRouteNoDriver(string routeNo, long driverID);
+        DroppedNodes GetDroppedNodes(string routeNo, int nodeID);
+    }
+
+    public interface IVrpSettingsRepository
+    {
+        List<VrpSettingInfo> GetVrpSettingInfo(string routeNo);
+        VrpSettingInfo GetVrpSettingInfo(string routeNo, long driverID);
+    }
+
+    public interface IRouteInfoRepository
+    {
+        IEnumerable<RouteInfo> GetAllRouteInfoByDriver(string companyID, string driverId, string flag, DateTime timeWindowStart, DateTime timeWindowEnd);
+        List<RouteInfo> GetAllRouteInfoByRouteNoDriver(string routeNo, long driverID);
+        List<RouteInfo> GetAllRouteInfoByRouteNoFlag(string routeNo, string flag);
+        RouteInfo Get(long id);
+        VrpInfo AddGeneratedRoutes(string routeNo, VrpInfo vrpInfo, List<VrpSettingInfo> arrVrpSettings, List<PickupDeliveryInfo> arrAllLocation, bool isAdHocCalculation, List<RouteInfo> arrRouteInfo = null);
+        bool SaveRoutes(string routeNo);
+        bool Update(RouteInfo routeInfo);
+        ResponseRouteInfoDeletion Remove(long routeID, bool isRecalculation);
+        CustomerOrder GetCustomerOrder(long RouteID, int CustomerID);
+        ResponseTimelineRoutes GetTimelineRoutes(string routeNo, string flag);
+    }
+
+    public interface IAreaCoveredInfoRepository
+    {
+        List<AreaCoveredInfo> GetAllByCompanyID(int companyID);
+    }
+
+    public interface IAssetFeatureRepository
+    {
+        List<AssetFeature> GetAll();
+    }
+
+    public interface IVrpPickupRepository
+    {
+        List<VrpPickup> GetPickupByIdsAndCustomerId(List<long> pickupIDs, int customerID);
+        List<VrpPickup> GetPickupByIds(List<long> pickupIDs);
+        List<string> GetDistinctRouteNo(string pickupIDs);
+        bool RemoveNotFeasibleAdhocPickupOrder(List<long> arrPickupIDs);
+    }
+
+    public interface IVrpDeliveryRepository
+    {
+        List<VrpDelivery> GetDeliveryByIdsAndCustomerId(List<long> deliveryIDs, int customerID);
+        List<VrpDelivery> GetDeliveryByIds(List<long> deliveryIDs);
+        List<string> GetDistinctRouteNo(string deliveryIDs);
+        bool RemoveNotFeasibleAdhocDeliveryOrder(List<long> arrDeliveryIDs);
+    }
+}
