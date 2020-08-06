@@ -88,6 +88,9 @@ namespace VrpModel
                 vehicleStartLocation.WaitingDuration = 0;
                 vehicleStartLocation.TimeWindowStart = arrVrpSettings[i].TimeWindowStart;
                 vehicleStartLocation.TimeWindowEnd = arrVrpSettings[i].TimeWindowEnd;
+                vehicleStartLocation.PickupIDs = new List<long>();
+                vehicleStartLocation.DeliveryIDs = new List<long>();
+                vehicleStartLocation.PickupFromIDs = new List<long>();
                 vehicleStartLocation.FeatureIDs = new List<int>();
                 vehicleStartLocation.Accessories = new List<long>();
                 arrAllLocation.Add(vehicleStartLocation);
@@ -133,6 +136,9 @@ namespace VrpModel
                     vehicleEndLocation.WaitingDuration = 0;
                     vehicleEndLocation.TimeWindowStart = arrVrpSettings[i].TimeWindowStart;
                     vehicleEndLocation.TimeWindowEnd = arrVrpSettings[i].TimeWindowEnd;
+                    vehicleEndLocation.PickupIDs = new List<long>();
+                    vehicleEndLocation.DeliveryIDs = new List<long>();
+                    vehicleEndLocation.PickupFromIDs = new List<long>();
                     vehicleEndLocation.FeatureIDs = new List<int>();
                     vehicleEndLocation.Accessories = new List<long>();
 

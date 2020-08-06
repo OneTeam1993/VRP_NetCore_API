@@ -17,7 +17,7 @@ namespace WebAPITime.Repositories
         {
             List<PickupDeliveryInfo> arrLocations = new List<PickupDeliveryInfo>();
             PickupDeliveryInfo currLocation = new PickupDeliveryInfo();
-            string query = string.Format("SELECT * FROM view_vrp_pickup_delivery WHERE route_no = @routeNo");
+            string query = string.Format("SELECT * FROM view_vrp_pickup_delivery WHERE route_no = @routeNo ORDER BY order_type DESC");
 
             using (MySqlConnection conn = new MySqlConnection(mConnStr))
             {
