@@ -1,4 +1,4 @@
-SELECT PickupDelivery.route_no, vrp_settings.company_id, pickup_delivery_id, pickup_id, delivery_id, pickup_from_id, order_type, order_no, priority_id, 
+SELECT PickupDelivery.route_no, vrp_settings.company_id, pickup_delivery_id, pickup_id, delivery_id, pickup_from_id, order_name, order_type, order_no, priority_id, 
 	PickupDelivery.driver_id, driver.driver_name, PickupDelivery.feature_ids, PickupDelivery.accessories, 
     PickupDelivery.latitude, PickupDelivery.longitude, PickupDelivery.address, PickupDelivery.postal_code, PickupDelivery.unit, 
     service_duration, total_weight, total_volume, 
@@ -7,7 +7,7 @@ SELECT PickupDelivery.route_no, vrp_settings.company_id, pickup_delivery_id, pic
     waiting_duration, PickupDelivery.time_window_start, PickupDelivery.time_window_end, isAssign, flag
 FROM (
 		(
-			SELECT p.route_no, p.pickup_id 'pickup_delivery_id', p.pickup_id, NULL delivery_id, NULL 'pickup_from_id', 'Pickup' order_type, order_no, priority_id, driver_id, feature_ids, accessories, latitude, longitude, 
+			SELECT p.route_no, p.pickup_id 'pickup_delivery_id', p.pickup_id, NULL delivery_id, NULL 'pickup_from_id', p.name 'order_name', 'Pickup' order_type, order_no, priority_id, driver_id, feature_ids, accessories, latitude, longitude, 
             CONCAT(
 				address,
 				(CASE WHEN unit IS NOT NULL THEN CONCAT(', ', unit) ELSE '' END),
@@ -24,7 +24,7 @@ FROM (
 		)
 		UNION ALL
         (
-			SELECT d.route_no, d.delivery_id 'pickup_delivery_id', NULL pickup_id, d.delivery_id, pickup_id 'pickup_from_id', 'Delivery' order_type, order_no, priority_id, driver_id, feature_ids, accessories, latitude, longitude, 
+			SELECT d.route_no, d.delivery_id 'pickup_delivery_id', NULL pickup_id, d.delivery_id, pickup_id 'pickup_from_id', d.shipping_name 'order_name', 'Delivery' order_type, order_no, priority_id, driver_id, feature_ids, accessories, latitude, longitude, 
              CONCAT(
 				shipping_address,
 				(CASE WHEN shipping_unit IS NOT NULL THEN CONCAT(', ', shipping_unit) ELSE '' END),

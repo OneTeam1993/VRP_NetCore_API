@@ -1,5 +1,5 @@
 SELECT r.vrp_routes_id, s.company_id, r.route_no, r.asset_id, a.name, r.driver_id, d.driver_name, r.order_type, r.pickup_ids, r.delivery_ids, r.pickup_from_ids, 
-r.route_distance, r.route_time, r.arrival_time, r.departure_time, r.sequence, r.status, r.feature_id, r.accessories, r.flag, r.timestamp, r.rx_time, 
+r.route_distance, r.route_time, r.arrival_time, r.departure_time, s.break_time_start, s.break_time_end, r.sequence, r.status, r.feature_id, r.accessories, r.flag, r.timestamp, r.rx_time, 
 SUM(v.total_weight) total_weight, SUM(v.total_volume) total_volume, SUM(v.service_duration) service_duration, SUM(v.load_duration) load_duration, SUM(v.unload_duration) unload_duration, SUM(v.waiting_duration) waiting_duration, v.priority_id,
 (CASE 
 	WHEN r.pickup_ids IS NULL AND r.delivery_ids IS NULL AND (r.status = 'Start location' OR r.status = 'Start location with break time') THEN s.start_latitude

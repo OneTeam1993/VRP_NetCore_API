@@ -29,7 +29,8 @@ namespace WebAPITime.Models
         public string Mobile { get; set; }
         public string Email { get; set; }
         public double Amount { get; set; }
-        public string Accessories { get; set; }
+        public string AccessoriesID { get; set; }
+        public string AccessoriesName { get; set; }
         public int IsAssign { get; set; }
         public int Flag { get; set; }
     }

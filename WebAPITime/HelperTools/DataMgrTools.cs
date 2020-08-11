@@ -18,6 +18,7 @@ namespace WebAPITime.HelperTools
             {
                 //udtLocation.PickupDeliveryID = dbRdr.ToInt64("pickup_delivery_id");
                 udtLocation.OrderType = dbRdr.ToString("order_type");
+                udtLocation.OrderName = new List<string>();
                 udtLocation.PickupIDs = new List<long>();
                 udtLocation.DeliveryIDs = new List<long>();
                 udtLocation.RouteNo = dbRdr.ToString("route_no");
@@ -36,6 +37,12 @@ namespace WebAPITime.HelperTools
                 udtLocation.UnloadDuration = dbRdr.ToInt32("unload_duration");
                 udtLocation.WaitingDuration = dbRdr.ToInt32("waiting_duration");
                 udtLocation.PickupFromIDs = new List<long>();
+
+                string orderName = dbRdr.ToString("order_name");
+                if (orderName.Trim() != "")
+                {
+                    udtLocation.OrderName.Add(orderName);
+                }
 
                 long pickupID = dbRdr.ToInt64("pickup_id");
                 if (pickupID != 0)
@@ -228,6 +235,8 @@ namespace WebAPITime.HelperTools
                 udtRoute.TimeOfRoute = dbRdr.ToInt32("route_time");
                 udtRoute.ArrivalTime = dbRdr.ToDateTime("arrival_time");
                 udtRoute.DepartureTime = dbRdr.ToDateTime("departure_time");
+                udtRoute.BreakTimeStart = dbRdr.ToDateTime("break_time_start");
+                udtRoute.BreakTimeEnd = dbRdr.ToDateTime("break_time_end");
                 udtRoute.Sequence = dbRdr.ToInt32("sequence");
                 udtRoute.Status = dbRdr.ToString("status");
                 udtRoute.Flag = dbRdr.ToInt32("flag");
@@ -324,7 +333,8 @@ namespace WebAPITime.HelperTools
                 udtVrpPickup.Mobile = dbRdr.ToString("mobile");
                 udtVrpPickup.Email = dbRdr.ToString("email");
                 udtVrpPickup.Amount = dbRdr.ToDouble("amount");
-                udtVrpPickup.Accessories = dbRdr.ToString("accessories");
+                udtVrpPickup.AccessoriesID = dbRdr.ToString("accessories");
+                udtVrpPickup.AccessoriesName = dbRdr.ToString("accessories_name");
                 udtVrpPickup.IsAssign = dbRdr.ToInt32("isAssign");
                 udtVrpPickup.Flag = dbRdr.ToInt32("flag");
 
@@ -376,7 +386,8 @@ namespace WebAPITime.HelperTools
                 udtVrpDelivery.ShippingMobile = dbRdr.ToString("shipping_mobile");
                 udtVrpDelivery.ShippingEmail = dbRdr.ToString("shipping_email");
                 udtVrpDelivery.Amount = dbRdr.ToDouble("amount");
-                udtVrpDelivery.Accessories = dbRdr.ToString("accessories");
+                udtVrpDelivery.AccessoriesID = dbRdr.ToString("accessories");
+                udtVrpDelivery.AccessoriesName = dbRdr.ToString("accessories_name");
                 udtVrpDelivery.IsAssign = dbRdr.ToInt32("isAssign");
                 udtVrpDelivery.Flag = dbRdr.ToInt32("flag");
 

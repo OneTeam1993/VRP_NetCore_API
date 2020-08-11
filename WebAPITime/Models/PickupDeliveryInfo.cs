@@ -7,6 +7,7 @@ namespace WebAPITime.Models
     {
         //public long PickupDeliveryID { get; set; }
         public string OrderType { get; set; }
+        public List<string> OrderName { get; set; }
         public List<long> PickupIDs { get; set; }
         public List<long> DeliveryIDs { get; set; }
         public string RouteNo { get; set; }

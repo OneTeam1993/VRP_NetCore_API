@@ -19,6 +19,8 @@ namespace WebAPITime.Models
         public int TimeOfRoute { get; set; }
         public DateTime ArrivalTime { get; set; }
         public DateTime DepartureTime { get; set; }
+        public DateTime BreakTimeStart { get; set; }
+        public DateTime BreakTimeEnd { get; set; }
         public int Sequence { get; set; }
         public List<int> FeatureIDs { get; set; }
         public List<long> Accessories { get; set; }

@@ -433,6 +433,7 @@ namespace WebApi.Repositories
                         droppedNodes += " " + data.arrAllLocation[manager.IndexToNode(index)].Node;
                         //currDroppedNodes = repoInitLoc.GetDroppedNodes(LocationTempID, data.arrAllLocation[manager.IndexToNode(index)].Node);
                         currDroppedNodes.NodeID = data.arrAllLocation[manager.IndexToNode(index)].Node;
+                        currDroppedNodes.OrderName = data.arrAllLocation[manager.IndexToNode(index)].OrderName;
                         currDroppedNodes.Address = data.arrAllLocation[manager.IndexToNode(index)].Address;
 
                         if (!string.IsNullOrEmpty(droppedNodes)) arrDroppedNodes.Add(currDroppedNodes);
@@ -453,6 +454,7 @@ namespace WebApi.Repositories
                     Vehicle vehicle = new Vehicle();
                     vehicle.VehicleNo = i;
                     vehicle.VehicleColor = String.Format("#{0:X6}", random.Next(0x1000000));
+                    vehicle.DriverName = data.arrVrpSettings[i].DriverName;
                     vehicle.Zones = data.arrVrpSettings[i].Zones;
                     vrpInfo.Logs += String.Format("Route for Vehicle {0}: ", i);
 
@@ -475,6 +477,7 @@ namespace WebApi.Repositories
                         previousNodeTime = solution.Min(timeVar);
                         node = new Node();
                         node.NodeID = data.arrAllLocation[manager.IndexToNode(index)].Node;
+                        node.OrderName = data.arrAllLocation[manager.IndexToNode(index)].OrderName;
                         node.Type = data.arrAllLocation[manager.IndexToNode(index)].OrderType;
                         node.PickupIDs = data.arrAllLocation[manager.IndexToNode(index)].PickupIDs;
                         node.DeliveryIDs = data.arrAllLocation[manager.IndexToNode(index)].DeliveryIDs;
@@ -528,6 +531,7 @@ namespace WebApi.Repositories
                     {
                         node = new Node();
                         node.NodeID = data.arrAllLocation[manager.IndexToNode(index)].Node;
+                        node.OrderName = data.arrAllLocation[manager.IndexToNode(index)].OrderName;
                         node.Type = data.arrAllLocation[manager.IndexToNode(index)].OrderType;
                         node.PickupIDs = data.arrAllLocation[manager.IndexToNode(index)].PickupIDs;
                         node.DeliveryIDs = data.arrAllLocation[manager.IndexToNode(index)].DeliveryIDs;
@@ -579,8 +583,8 @@ namespace WebApi.Repositories
                             lstNodes[j].Status += " with break time";
                         }
 
-                        vehicleRoute += String.Format("<tr><td style=\"text-align: left;\">Location {0}: <span style=\"font-weight: bold;\">{1}</span></br>Type: {2}</br>Status: {3}</br>{4} DateTime: {5}</br>{6}Service Duration: {7}</br>Weight: {8}</br>Volume: {9}</br>Load Duration: {10}</br>Unload Duration: {11}</br>Waiting Duration: {12}</td></tr>", 
-                            routeNo++, lstNodes[j].Address, lstNodes[j].Type, lstNodes[j].Status, j > 0 ? "Arrival" : "Start", lstNodes[j].ArrivalTime, j + 1 != lstNodes.Count ? "Departure DateTime: " + lstNodes[j].DepartureTime + "</br>" : "", lstNodes[j].ServiceDuration, lstNodes[j].Weight, lstNodes[j].Volume, lstNodes[j].LoadDuration, lstNodes[j].UnloadDuration, lstNodes[j].WaitingDuration);
+                        vehicleRoute += String.Format("<tr><td style=\"text-align: left;\">Location {0}: <span style=\"font-weight: bold;\">{1}</span></br>Customer/Order Name: {2}</br>Type: {3}</br>Status: {4}</br>{5} DateTime: {6}</br>{7}Service Duration: {8}</br>Weight: {9}</br>Volume: {10}</br>Load Duration: {11}</br>Unload Duration: {12}</br>Waiting Duration: {13}</td></tr>", 
+                            routeNo++, lstNodes[j].Address, lstNodes[j].OrderName.Count > 0 ? string.Join(", ", lstNodes[j].OrderName) : "-", lstNodes[j].Type, lstNodes[j].Status, j > 0 ? "Arrival" : "Start", lstNodes[j].ArrivalTime, j + 1 != lstNodes.Count ? "Departure DateTime: " + lstNodes[j].DepartureTime + "</br>" : "", lstNodes[j].ServiceDuration, lstNodes[j].Weight, lstNodes[j].Volume, lstNodes[j].LoadDuration, lstNodes[j].UnloadDuration, lstNodes[j].WaitingDuration);
                     }
                     vehicle.Route = vehicleRoute + "</table>";
                     vehicle.WeightCapacity = data.arrVrpSettings[i].WeightCapacity;

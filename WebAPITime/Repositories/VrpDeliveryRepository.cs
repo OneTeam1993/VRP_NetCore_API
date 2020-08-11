@@ -17,7 +17,12 @@ namespace WebAPITime.Repositories
         {
             List<VrpDelivery> arrDeliveries = new List<VrpDelivery>();
             VrpDelivery currVrpDelivery = new VrpDelivery();
-            string query = string.Format("SELECT * FROM vrp_delivery WHERE delivery_id IN (" + string.Join(",", deliveryIDs) + ") AND customer_id = @CustomerID");
+            //string query = string.Format("SELECT * FROM vrp_delivery WHERE delivery_id IN (" + string.Join(",", deliveryIDs) + ") AND customer_id = @CustomerID");
+            string query = string.Format("SELECT d.*, GROUP_CONCAT(NULLIF(mii.item_name, '')) AS 'accessories_name' " +
+                "FROM vrp_delivery d " +
+                "LEFT JOIN main_inventory_item mii ON FIND_IN_SET(mii.main_inventory_item_id, d.accessories) " +
+                "WHERE delivery_id IN (" + string.Join(",", deliveryIDs) + ") AND customer_id = @CustomerID " +
+                "GROUP BY d.delivery_id");
 
             using (MySqlConnection conn = new MySqlConnection(mConnStr))
             {

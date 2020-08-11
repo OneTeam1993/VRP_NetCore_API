@@ -70,7 +70,8 @@ namespace VrpModel
             for (int i = 0; i < arrVrpSettings.Count; i++)
             {
                 PickupDeliveryInfo vehicleStartLocation = new PickupDeliveryInfo();
-                vehicleStartLocation.OrderType = "Pickup";
+                vehicleStartLocation.OrderType = "-";
+                vehicleStartLocation.OrderName = new List<string>();
                 vehicleStartLocation.PickupIDs = new List<long>();
                 vehicleStartLocation.DeliveryIDs = new List<long>();
                 vehicleStartLocation.RouteNo = arrVrpSettings[i].RouteNo;
@@ -118,7 +119,8 @@ namespace VrpModel
                 else
                 {
                     PickupDeliveryInfo vehicleEndLocation = new PickupDeliveryInfo();
-                    vehicleEndLocation.OrderType = "Delivery";
+                    vehicleEndLocation.OrderType = "-";
+                    vehicleEndLocation.OrderName = new List<string>();
                     vehicleEndLocation.PickupIDs = new List<long>();
                     vehicleEndLocation.DeliveryIDs = new List<long>();
                     vehicleEndLocation.RouteNo = arrVrpSettings[i].RouteNo;
@@ -163,6 +165,11 @@ namespace VrpModel
                 combinedLocation.UnloadDuration += from.UnloadDuration;
                 combinedLocation.WaitingDuration += from.WaitingDuration;
 
+                if (from.OrderName.Count > 0 && !combinedLocation.OrderName.Contains(from.OrderName[0]))
+                {
+                    combinedLocation.OrderName.Add(from.OrderName[0]);
+                }
+
                 foreach (int featureID in from.FeatureIDs)
                 {
                     if (!combinedLocation.FeatureIDs.Contains(featureID))
@@ -181,22 +188,29 @@ namespace VrpModel
 
                 if(combinedLocation.OrderType != "Pickup and Delivery")
                 {
-                    switch (from.OrderType)
+                    if (combinedLocation.OrderType == "-")
                     {
-                        case "Pickup":
-                            if (combinedLocation.OrderType == "Delivery")
-                            {
-                                combinedLocation.OrderType = "Pickup and Delivery";
-                            }                           
-                            break;
-
-                        case "Delivery":
-                            if (combinedLocation.OrderType == "Pickup")
-                            {
-                                combinedLocation.OrderType = "Pickup and Delivery";
-                            }
-                            break;
+                        combinedLocation.OrderType = from.OrderType;
                     }
+                    else
+                    {
+                        switch (from.OrderType)
+                        {
+                            case "Pickup":
+                                if (combinedLocation.OrderType == "Delivery")
+                                {
+                                    combinedLocation.OrderType = "Pickup and Delivery";
+                                }
+                                break;
+
+                            case "Delivery":
+                                if (combinedLocation.OrderType == "Pickup")
+                                {
+                                    combinedLocation.OrderType = "Pickup and Delivery";
+                                }
+                                break;
+                        } 
+                    }                                        
                 }
 
                 switch (from.OrderType)
@@ -424,8 +438,6 @@ namespace VrpModel
 
                     if (arrLocations[i].OrderType == "Pickup")
                     {
-                        //arrLocations[i].PickupIDs.Add(arrLocations[i].PickupDeliveryID);
-
                         if (!pickupIdToNodeMap.ContainsKey(arrLocations[i].PickupIDs[0]))
                         {
                             pickupIdToNodeMap[arrLocations[i].PickupIDs[0]] = arrLocations[i].Node;
@@ -433,8 +445,6 @@ namespace VrpModel
                     }
                     else if (arrLocations[i].OrderType == "Delivery")
                     {
-                        //arrLocations[i].DeliveryIDs.Add(arrLocations[i].DeliveryIDs[0]);
-
                         if (arrLocations[i].PickupFromIDs.Count > 0)
                         {
                             foreach (long pickupID in arrLocations[i].PickupFromIDs)

@@ -22,6 +22,7 @@ namespace VrpModel
     {
         public int VehicleNo { get; set; }
         public string VehicleColor { get; set; }
+        public string DriverName { get; set; }
         public Dictionary<int, string> Zones { get; set; }
         public int WeightCapacity { get; set; }
         public int VolumeCapacity { get; set; }              
@@ -36,6 +37,7 @@ namespace VrpModel
     public class Node
     {
         public int NodeID { get; set; }
+        public List<string> OrderName { get; set; }
         public string Type { get; set; }
         public List<long> PickupIDs { get; set; }
         public List<long> DeliveryIDs { get; set; }
@@ -61,6 +63,7 @@ namespace VrpModel
     public class DroppedNodes
     {
         public long NodeID { get; set; }
+        public List<string> OrderName { get; set; }
         public string Address { get; set; }
         public Dictionary<string, string> Reasons { get; set; }
     }
