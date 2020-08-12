@@ -68,8 +68,25 @@ namespace VrpModel
                 }
             }
 
+            bool isValidDriverTimeWindow = true;
+
             for (int i = 0; i < arrVrpSettings.Count; i++)
             {
+                //Driver time window validation
+                int timeWindowStart = (arrVrpSettings[i].TimeWindowStart.Hour * 60) + arrVrpSettings[i].TimeWindowStart.Minute;
+                int timeWindowEnd = (arrVrpSettings[i].TimeWindowEnd.Hour * 60) + arrVrpSettings[i].TimeWindowEnd.Minute;
+
+                if (timeWindowEnd < timeWindowStart)
+                {
+                    isValidDriverTimeWindow = false;
+                }
+
+                if (!isValidDriverTimeWindow)
+                {
+                    errorMessage = String.Format("Personnel: {0} Invalid time window", arrVrpSettings[i].DriverName);
+                    return;
+                }
+
                 PickupDeliveryInfo vehicleStartLocation = new PickupDeliveryInfo();
                 vehicleStartLocation.OrderType = "-";
                 vehicleStartLocation.OrderName = new List<string>();
