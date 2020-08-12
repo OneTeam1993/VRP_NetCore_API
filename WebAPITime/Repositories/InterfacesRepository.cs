@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using VrpModel;
 using WebAPITime.Models;
 
-namespace WebApi.Repositories
+namespace WebAPITime.Repositories
 {
     public interface IVrpRepository
     {
-        IEnumerable<VrpInfo> GetAll(string RouteNo);
+        IEnumerable<VrpInfo> GetAll(string routeNo, string companyName, string userName, string roleID);
         VrpAvailableTimeInfo GetAvailableTimeForAdhocOrder(string routeNo, long driverID);
         IEnumerable<VrpInfo> CheckAdHocOrderFeasibility(string routeNo, long driverID, [FromBody] TempAdHocLocation tempAdHocLocation);
         IEnumerable<VrpInfo> InsertAdHocOrder(string routeNo, long driverID, string pickupID, string deliveryID);
@@ -37,7 +37,7 @@ namespace WebApi.Repositories
         VrpInfo AddGeneratedRoutes(string routeNo, VrpInfo vrpInfo, List<VrpSettingInfo> arrVrpSettings, List<PickupDeliveryInfo> arrAllLocation, bool isAdHocCalculation, List<RouteInfo> arrRouteInfo = null);
         bool SaveRoutes(string routeNo);
         bool Update(RouteInfo routeInfo);
-        ResponseRouteInfoDeletion Remove(long routeID, bool isRecalculation);
+        ResponseRouteInfoDeletion Remove(long routeID, bool isRecalculation, string companyID, string companyName, string userName, string roleID);
         CustomerOrder GetCustomerOrder(long RouteID, int CustomerID);
         ResponseTimelineRoutes GetTimelineRoutes(string routeNo, string flag);
     }
@@ -66,5 +66,10 @@ namespace WebApi.Repositories
         List<VrpDelivery> GetDeliveryByIds(List<long> deliveryIDs);
         List<string> GetDistinctRouteNo(string deliveryIDs);
         bool RemoveNotFeasibleAdhocDeliveryOrder(List<long> arrDeliveryIDs);
+    }
+
+    public interface IEventRepository
+    {
+        bool LogVrpEvent(string companyID, string companyName, string userName, string roleID, string eventLog);
     }
 }

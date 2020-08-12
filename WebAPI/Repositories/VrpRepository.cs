@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using VrpModel;
 using WebAPI.Repository;
 
-namespace WebApi.Repositories
+namespace WebAPITime.Repositories
 {
     public class VrpRepository : IVrpRepository
     {

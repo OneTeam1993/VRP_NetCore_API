@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using VrpModel;
-using WebApi.Repositories;
-using WebAPITime.Models;
 using WebAPITime.Repositories;
 
 namespace WebAPI.Controllers
@@ -24,9 +22,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet]
-        public IEnumerable<VrpInfo> Get(string RouteNo)
+        public IEnumerable<VrpInfo> Get(string routeNo, string companyName, string userName, string roleID)
         {
-            return vrpRepository.GetAll(RouteNo);
+            return vrpRepository.GetAll(routeNo, companyName, userName, roleID);
         }
     }
 }

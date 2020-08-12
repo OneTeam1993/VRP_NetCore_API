@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Text;
 using VrpModel;
-using WebApi.Repositories;
+using WebAPITime.Repositories;
 using WebAPITime.HelperTools;
 using WebAPITime.Models;
 
@@ -23,6 +23,7 @@ namespace WebAPITime.Repositories
         private static readonly IRouteInfoRepository repoRouteInfo = new RouteInfoRepository();
         private static readonly IAreaCoveredInfoRepository repoAreaCoveredInfo = new AreaCoveredInfoRepository();
         private static readonly IVrpRepository repoVrpInfo = new VrpRepository();
+        private static readonly IEventRepository repoEvent = new EventRepository();
 
         public IEnumerable<RouteInfo> GetAllRouteInfoByDriver(string companyID, string driverID, string flag, DateTime timeWindowStart, DateTime timeWindowEnd)
         {
@@ -647,7 +648,7 @@ namespace WebAPITime.Repositories
             return retVal;
         }
 
-        public ResponseRouteInfoDeletion Remove(long routeID, bool isRecalculation)
+        public ResponseRouteInfoDeletion Remove(long routeID, bool isRecalculation, string companyID, string companyName, string userName, string roleID)
         {
             RouteInfo currRoute = new RouteInfo();
             VrpInfo currVrp = new VrpInfo();
@@ -665,91 +666,106 @@ namespace WebAPITime.Repositories
                 if (currRoute.RouteID == 0)
                 {
                     responseRouteInfoDeletion.ErrorMessage = String.Format("Failed to retrive routeID: {0}", routeID);
-                    return responseRouteInfoDeletion;
+                    //return responseRouteInfoDeletion;
                 }
             }
             catch(Exception ex)
             {
+                Logger.LogEvent(mProjName, String.Format("RouteInfoRepository Remove() Failed to retrive routeID - Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
                 responseRouteInfoDeletion.ErrorMessage = String.Format("Failed to retrive routeID: {0}", routeID);
-                return responseRouteInfoDeletion;
+                //return responseRouteInfoDeletion;
             }
-                                            
-            try
+
+            if (responseRouteInfoDeletion.ErrorMessage == null)
             {
-                using (MySqlConnection mConnection = new MySqlConnection(mConnStr))
+                try
                 {
-                    List<string> RowsUpdate = new List<string>();
-                    RowsUpdate.Add(string.Format("DELETE FROM vrp_routes WHERE vrp_routes_id = {0}", currRoute.RouteID));
-                    foreach(long pickupID in currRoute.PickupDeliveryInfo.PickupIDs)
+                    using (MySqlConnection mConnection = new MySqlConnection(mConnStr))
                     {
-                        RowsUpdate.Add(string.Format("DELETE FROM vrp_pickup WHERE pickup_id = {0}", pickupID));
-                        RowsUpdate.Add(string.Format("DELETE FROM vrp_pickup_item WHERE pickup_id = {0}", pickupID));
-                    }
-
-                    foreach (long deliveryID in currRoute.PickupDeliveryInfo.DeliveryIDs)
-                    {
-                        RowsUpdate.Add(string.Format("DELETE FROM vrp_delivery WHERE delivery_id = {0}", deliveryID));
-                        RowsUpdate.Add(string.Format("DELETE FROM vrp_delivery_item WHERE delivery_id = {0}", deliveryID));
-                    }
-
-                    sCommand.Append(string.Join(";", RowsUpdate));
-                    mConnection.Open();
-                    using (MySqlCommand myCmd = new MySqlCommand(sCommand.ToString(), mConnection))
-                    {
-                        myCmd.CommandType = CommandType.Text;
-                        if(myCmd.ExecuteNonQuery() > 0)
+                        List<string> RowsUpdate = new List<string>();
+                        RowsUpdate.Add(string.Format("DELETE FROM vrp_routes WHERE vrp_routes_id = {0}", currRoute.RouteID));
+                        foreach (long pickupID in currRoute.PickupDeliveryInfo.PickupIDs)
                         {
-                            isDeleteSuccess = true;
-                        }                           
+                            RowsUpdate.Add(string.Format("DELETE FROM vrp_pickup WHERE pickup_id = {0}", pickupID));
+                            RowsUpdate.Add(string.Format("DELETE FROM vrp_pickup_item WHERE pickup_id = {0}", pickupID));
+                        }
+
+                        foreach (long deliveryID in currRoute.PickupDeliveryInfo.DeliveryIDs)
+                        {
+                            RowsUpdate.Add(string.Format("DELETE FROM vrp_delivery WHERE delivery_id = {0}", deliveryID));
+                            RowsUpdate.Add(string.Format("DELETE FROM vrp_delivery_item WHERE delivery_id = {0}", deliveryID));
+                        }
+
+                        sCommand.Append(string.Join(";", RowsUpdate));
+                        mConnection.Open();
+                        using (MySqlCommand myCmd = new MySqlCommand(sCommand.ToString(), mConnection))
+                        {
+                            myCmd.CommandType = CommandType.Text;
+                            if (myCmd.ExecuteNonQuery() > 0)
+                            {
+                                isDeleteSuccess = true;
+                            }
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogEvent(mProjName, String.Format("RouteInfoRepository Remove() Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
-                responseRouteInfoDeletion.ErrorMessage = String.Format("Failed to delete.");
-                //return;
-            }
-
-            if (isDeleteSuccess)
-            {
-                if (isRecalculation)
+                catch (Exception ex)
                 {
-                    try
+                    Logger.LogEvent(mProjName, String.Format("RouteInfoRepository Remove() Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                    responseRouteInfoDeletion.ErrorMessage = String.Format("Failed to delete.");
+
+                }
+
+                if (isDeleteSuccess)
+                {
+                    if (isRecalculation)
                     {
-                        List<PickupDeliveryInfo> arrLocations = repoInitialLocation.GetAssignedLocationInfoByRouteNoDriver(currRoute.RouteNo, currRoute.DriverID);
-                        List<VrpSettingInfo> arrVrpSettings = new List<VrpSettingInfo>();
-                        VrpSettingInfo vrpSettingInfo = repoVrpSettings.GetVrpSettingInfo(currRoute.RouteNo, currRoute.DriverID);
-                        arrVrpSettings.Add(vrpSettingInfo);
-                        List<RouteInfo> arrRouteInfo = repoRouteInfo.GetAllRouteInfoByRouteNoDriver(currRoute.RouteNo, currRoute.DriverID);
-                        List<AreaCoveredInfo> arrAreaCovered = repoAreaCoveredInfo.GetAllByCompanyID(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID : 0);
-                        DataModel data = new DataModel(arrLocations, arrVrpSettings, arrAreaCovered);
-
-                        currVrp = repoVrpInfo.VRPCalculation(currRoute.RouteNo, data, false, false, true, arrRouteInfo);
-                        responseRouteInfoDeletion.RecalculatedRouteInfo = currVrp;
-
-                        if (responseRouteInfoDeletion.RecalculatedRouteInfo.StatusCode != null && responseRouteInfoDeletion.RecalculatedRouteInfo.StatusCode == "1" && responseRouteInfoDeletion.RecalculatedRouteInfo.DroppedNodes.Count == 0)
+                        try
                         {
-                            responseRouteInfoDeletion.IsSuccess = true;
+                            List<PickupDeliveryInfo> arrLocations = repoInitialLocation.GetAssignedLocationInfoByRouteNoDriver(currRoute.RouteNo, currRoute.DriverID);
+                            List<VrpSettingInfo> arrVrpSettings = new List<VrpSettingInfo>();
+                            VrpSettingInfo vrpSettingInfo = repoVrpSettings.GetVrpSettingInfo(currRoute.RouteNo, currRoute.DriverID);
+                            arrVrpSettings.Add(vrpSettingInfo);
+                            List<RouteInfo> arrRouteInfo = repoRouteInfo.GetAllRouteInfoByRouteNoDriver(currRoute.RouteNo, currRoute.DriverID);
+                            List<AreaCoveredInfo> arrAreaCovered = repoAreaCoveredInfo.GetAllByCompanyID(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID : 0);
+                            DataModel data = new DataModel(arrLocations, arrVrpSettings, arrAreaCovered);
+
+                            currVrp = repoVrpInfo.VRPCalculation(currRoute.RouteNo, data, false, false, true, arrRouteInfo);
+                            responseRouteInfoDeletion.RecalculatedRouteInfo = currVrp;
+
+                            if (responseRouteInfoDeletion.RecalculatedRouteInfo.StatusCode != null && responseRouteInfoDeletion.RecalculatedRouteInfo.StatusCode == "1" && responseRouteInfoDeletion.RecalculatedRouteInfo.DroppedNodes.Count == 0)
+                            {
+                                responseRouteInfoDeletion.IsSuccess = true;
+                            }
+                            else
+                            {
+                                responseRouteInfoDeletion.ErrorMessage = String.Format("Failed to recalculate after delete.");
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
+                            Logger.LogEvent(mProjName, String.Format("RouteInfoRepository Remove() Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
                             responseRouteInfoDeletion.ErrorMessage = String.Format("Failed to recalculate after delete.");
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogEvent(mProjName, String.Format("RouteInfoRepository Remove() Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
-                        responseRouteInfoDeletion.ErrorMessage = String.Format("Failed to recalculate after delete.");
-                    }
-                    
 
-                }
-                else
-                {
-                    responseRouteInfoDeletion.IsSuccess = true;
+
+                    }
+                    else
+                    {
+                        responseRouteInfoDeletion.IsSuccess = true;
+                    }
                 }
             }
+            
+
+            string action = isRecalculation ? "Delete route and recalculate" : "Delete route";
+            string eventLog = String.Format("RouteID: {0} Action: {1}", routeID, action);
+
+            if (responseRouteInfoDeletion.ErrorMessage != null && responseRouteInfoDeletion.ErrorMessage.Length > 0)
+            {
+                eventLog += String.Format(" Error: {0}", responseRouteInfoDeletion.ErrorMessage);
+            }
+
+            repoEvent.LogVrpEvent(companyID, companyName, userName, roleID, eventLog);
 
             return responseRouteInfoDeletion;
         }

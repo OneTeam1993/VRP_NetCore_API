@@ -9,7 +9,7 @@ using WebAPITime.HelperTools;
 using WebAPITime.Models;
 using WebAPITime.Repositories;
 
-namespace WebApi.Repositories
+namespace WebAPITime.Repositories
 {
     public class VrpRepository : IVrpRepository
     {
@@ -20,18 +20,21 @@ namespace WebApi.Repositories
         private static readonly IAssetFeatureRepository repoAssetFeature = new AssetFeatureRepository();
         private static readonly IVrpPickupRepository repoVrpPickup = new VrpPickupRepository();
         private static readonly IVrpDeliveryRepository repoVrpDelivery = new VrpDeliveryRepository();
+        private static readonly IEventRepository repoEvent = new EventRepository();
         public long averageTime = 0;
         public long averageDistance = 0;
 
-        public IEnumerable<VrpInfo> GetAll(string RouteNo)
+        public IEnumerable<VrpInfo> GetAll(string routeNo, string companyName, string userName, string roleID)
         {
             List<VrpInfo> arrVrp = new List<VrpInfo>();
             VrpInfo currVrp = new VrpInfo();
+            List<PickupDeliveryInfo> arrLocations = new List<PickupDeliveryInfo>();
+            List<VrpSettingInfo> arrVrpSettings = new List<VrpSettingInfo>();
 
             try
             {
-                List<PickupDeliveryInfo> arrLocations = repoInitialLocation.GetLocationInfo(RouteNo);
-                List<VrpSettingInfo> arrVrpSettings = repoVrpSettings.GetVrpSettingInfo(RouteNo);
+                arrLocations = repoInitialLocation.GetLocationInfo(routeNo);
+                arrVrpSettings = repoVrpSettings.GetVrpSettingInfo(routeNo);
 
                 if (arrLocations.Count < 1)
                 {
@@ -45,8 +48,10 @@ namespace WebApi.Repositories
                 {
                     List<AreaCoveredInfo> arrAreaCovered = repoAreaCoveredInfo.GetAllByCompanyID(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID : 0);
                     DataModel data = new DataModel(arrLocations, arrVrpSettings, arrAreaCovered);
-                    currVrp = VRPCalculation(RouteNo, data);
+                    currVrp = VRPCalculation(routeNo, data);                    
                 }
+              
+                
             }
             catch(Exception ex)
             {
@@ -54,7 +59,15 @@ namespace WebApi.Repositories
                 Logger.LogEvent(ConfigurationManager.AppSettings["mProjName"], String.Format("VrpRepository GetAll(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
             }
 
-            
+            string eventLog = String.Format("RouteNo: {0} Action: Generate Route", routeNo);
+
+            if (currVrp.ErrorMessage != null && currVrp.ErrorMessage.Length > 0)
+            {
+                eventLog += String.Format(" Error: {0}", currVrp.ErrorMessage);
+            }
+
+            repoEvent.LogVrpEvent(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID.ToString() : "0", companyName, userName, roleID, eventLog);
+
             arrVrp.Add(currVrp);
             return arrVrp.ToArray();
 
@@ -1219,7 +1232,7 @@ namespace WebApi.Repositories
 
                     if (arrAdHocDelivery != null && arrAdHocDelivery.Count > 0)
                     {
-                        if (!repoVrpPickup.RemoveNotFeasibleAdhocPickupOrder(arrAdHocDelivery))
+                        if (!repoVrpDelivery.RemoveNotFeasibleAdhocDeliveryOrder(arrAdHocDelivery))
                         {
                             isDeleteSuccess = false;
                         }

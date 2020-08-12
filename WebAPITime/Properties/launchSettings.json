@@ -12,7 +12,7 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      "launchUrl": "api/VrpRouteInfo?CompanyID=14&Flag=1,2,3&TimeWindowStart=03-Aug-2020&TimeWindowEnd=04-Aug-2020",
+      "launchUrl": "vrp?RouteNo=ws-testing4&CompanyName=Acecom Technologies Pte. Ltd.&Username=systemacecom&RoleID=1",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

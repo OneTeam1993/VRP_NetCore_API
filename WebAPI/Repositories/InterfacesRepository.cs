@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using VrpModel;
 
-namespace WebApi.Repositories
+namespace WebAPITime.Repositories
 {
     public interface IVrpRepository
     {

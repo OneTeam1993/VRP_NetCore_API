@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Repositories;
+using WebAPITime.Repositories;
 using WebAPITime.Models;
 using WebAPITime.Repositories;
 
