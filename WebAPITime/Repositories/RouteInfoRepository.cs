@@ -24,6 +24,7 @@ namespace WebAPITime.Repositories
         private static readonly IAreaCoveredInfoRepository repoAreaCoveredInfo = new AreaCoveredInfoRepository();
         private static readonly IVrpRepository repoVrpInfo = new VrpRepository();
         private static readonly IEventRepository repoEvent = new EventRepository();
+        private static readonly IVrpLocationRequestsRepository repoVrpLocationRequest = new VrpLocationRequestsRepository();
 
         public IEnumerable<RouteInfo> GetAllRouteInfoByDriver(string companyID, string driverID, string flag, DateTime timeWindowStart, DateTime timeWindowEnd)
         {
@@ -719,15 +720,18 @@ namespace WebAPITime.Repositories
                 {
                     if (isRecalculation)
                     {
+                        List<VrpSettingInfo> arrVrpSettings = new List<VrpSettingInfo>();
+                        int totalLocationRequest = 0;
+
                         try
                         {
-                            List<PickupDeliveryInfo> arrLocations = repoInitialLocation.GetAssignedLocationInfoByRouteNoDriver(currRoute.RouteNo, currRoute.DriverID);
-                            List<VrpSettingInfo> arrVrpSettings = new List<VrpSettingInfo>();
+                            List<PickupDeliveryInfo> arrLocations = repoInitialLocation.GetAssignedLocationInfoByRouteNoDriver(currRoute.RouteNo, currRoute.DriverID);                           
                             VrpSettingInfo vrpSettingInfo = repoVrpSettings.GetVrpSettingInfo(currRoute.RouteNo, currRoute.DriverID);
                             arrVrpSettings.Add(vrpSettingInfo);
                             List<RouteInfo> arrRouteInfo = repoRouteInfo.GetAllRouteInfoByRouteNoDriver(currRoute.RouteNo, currRoute.DriverID);
                             List<AreaCoveredInfo> arrAreaCovered = repoAreaCoveredInfo.GetAllByCompanyID(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID : 0);
                             DataModel data = new DataModel(arrLocations, arrVrpSettings, arrAreaCovered);
+                            totalLocationRequest = data.totalLocationRequests;
 
                             currVrp = repoVrpInfo.VRPCalculation(currRoute.RouteNo, data, false, false, true, arrRouteInfo);
                             responseRouteInfoDeletion.RecalculatedRouteInfo = currVrp;
@@ -747,7 +751,19 @@ namespace WebAPITime.Repositories
                             responseRouteInfoDeletion.ErrorMessage = String.Format("Failed to recalculate after delete.");
                         }
 
+                        if (totalLocationRequest > 0)
+                        {
+                            try
+                            {
+                                repoVrpLocationRequest.AddTotalRequest(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID.ToString() : "0", currRoute.RouteNo, totalLocationRequest);
+                            }
+                            catch (Exception ex)
+                            {
+                                responseRouteInfoDeletion.ErrorMessage = String.Format("Error occured when saving total location request. Error message: {0}", ex.Message);
+                                Logger.LogEvent(ConfigurationManager.AppSettings["mProjName"], String.Format("RouteInfoRepository Remove(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                            }
 
+                        }
                     }
                     else
                     {

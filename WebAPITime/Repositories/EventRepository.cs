@@ -15,7 +15,7 @@ namespace WebAPITime.Repositories
         {
             bool isSuccess = false;
             string currentDateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-            string remarks = string.Format("Username: {0} Company: {1} {2}", userName ?? "-", companyName ?? "-", eventLog);
+            string remarks = string.Format("Username: {0} Company: {1} {2}", userName ?? "- ", companyName ?? "- ", eventLog);
 
             StringBuilder sCommand = new StringBuilder(string.Format("" +
                 "INSERT INTO events (asset_id, tag_id, timestamp, rx_time, status_id, remarks, alert_level, alert_level_ex, flag, ack_user, ack_time, pos_id, company_id) VALUES " +

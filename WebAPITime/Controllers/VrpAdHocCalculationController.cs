@@ -14,9 +14,9 @@ namespace WebAPITime.Controllers
         private static readonly IVrpRepository vrpRepository = new VrpRepository();
 
         [HttpPost]
-        public IEnumerable<VrpInfo> CheckAdhocFeasibility(string routeNo, long driverID, string pickupID, string deliveryID)
+        public IEnumerable<VrpInfo> CheckAdhocFeasibility(string routeNo, long driverID, string pickupID, string deliveryID, string companyName, string userName, string roleID)
         {
-            return vrpRepository.InsertAdHocOrder(routeNo, driverID, pickupID, deliveryID);
+            return vrpRepository.InsertAdHocOrder(routeNo, driverID, pickupID, deliveryID, companyName, userName, roleID);
         }
     }
 }

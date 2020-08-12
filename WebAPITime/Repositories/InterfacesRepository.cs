@@ -11,7 +11,7 @@ namespace WebAPITime.Repositories
         IEnumerable<VrpInfo> GetAll(string routeNo, string companyName, string userName, string roleID);
         VrpAvailableTimeInfo GetAvailableTimeForAdhocOrder(string routeNo, long driverID);
         IEnumerable<VrpInfo> CheckAdHocOrderFeasibility(string routeNo, long driverID, [FromBody] TempAdHocLocation tempAdHocLocation);
-        IEnumerable<VrpInfo> InsertAdHocOrder(string routeNo, long driverID, string pickupID, string deliveryID);
+        IEnumerable<VrpInfo> InsertAdHocOrder(string routeNo, long driverID, string pickupID, string deliveryID, string companyName, string userName, string roleID);
         VrpInfo VRPCalculation(string routeNo, DataModel data, bool isCheckAdHocFeasibility = false, bool isInsertAdHoc = false, bool isRecalculateAfterDelete = false, List<RouteInfo> arrRouteInfo = null);
     }
 
@@ -71,5 +71,10 @@ namespace WebAPITime.Repositories
     public interface IEventRepository
     {
         bool LogVrpEvent(string companyID, string companyName, string userName, string roleID, string eventLog);
+    }
+
+    public interface IVrpLocationRequestsRepository
+    {
+        bool AddTotalRequest(string companyID, string routeNo, int totalRequest);
     }
 }

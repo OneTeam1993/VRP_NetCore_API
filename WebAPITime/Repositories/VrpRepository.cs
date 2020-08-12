@@ -21,6 +21,7 @@ namespace WebAPITime.Repositories
         private static readonly IVrpPickupRepository repoVrpPickup = new VrpPickupRepository();
         private static readonly IVrpDeliveryRepository repoVrpDelivery = new VrpDeliveryRepository();
         private static readonly IEventRepository repoEvent = new EventRepository();
+        private static readonly IVrpLocationRequestsRepository repoVrpLocationRequest = new VrpLocationRequestsRepository();
         public long averageTime = 0;
         public long averageDistance = 0;
 
@@ -30,6 +31,7 @@ namespace WebAPITime.Repositories
             VrpInfo currVrp = new VrpInfo();
             List<PickupDeliveryInfo> arrLocations = new List<PickupDeliveryInfo>();
             List<VrpSettingInfo> arrVrpSettings = new List<VrpSettingInfo>();
+            int totalLocationRequest = 0;
 
             try
             {
@@ -48,6 +50,7 @@ namespace WebAPITime.Repositories
                 {
                     List<AreaCoveredInfo> arrAreaCovered = repoAreaCoveredInfo.GetAllByCompanyID(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID : 0);
                     DataModel data = new DataModel(arrLocations, arrVrpSettings, arrAreaCovered);
+                    totalLocationRequest = data.totalLocationRequests;
                     currVrp = VRPCalculation(routeNo, data);                    
                 }
               
@@ -57,6 +60,20 @@ namespace WebAPITime.Repositories
             {
                 currVrp.ErrorMessage = String.Format("Error occured when calculating route. Error message: {0}", ex.Message);
                 Logger.LogEvent(ConfigurationManager.AppSettings["mProjName"], String.Format("VrpRepository GetAll(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+            }
+
+            if (totalLocationRequest > 0)
+            {
+                try
+                {
+                    repoVrpLocationRequest.AddTotalRequest(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID.ToString() : "0", routeNo, totalLocationRequest);
+                }
+                catch (Exception ex)
+                {
+                    currVrp.ErrorMessage = String.Format("Error occured when saving total location request. Error message: {0}", ex.Message);
+                    Logger.LogEvent(ConfigurationManager.AppSettings["mProjName"], String.Format("VrpRepository GetAll(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                }
+
             }
 
             string eventLog = String.Format("RouteNo: {0} Action: Generate Route", routeNo);
@@ -1157,10 +1174,12 @@ namespace WebAPITime.Repositories
             return arrVrp.ToArray();
         }
 
-        public IEnumerable<VrpInfo> InsertAdHocOrder(string routeNo, long driverID, string pickupID, string deliveryID)
+        public IEnumerable<VrpInfo> InsertAdHocOrder(string routeNo, long driverID, string pickupID, string deliveryID, string companyName, string userName, string roleID)
         {
             List<VrpInfo> arrVrp = new List<VrpInfo>();
             VrpInfo currVrp = new VrpInfo();
+            List<VrpSettingInfo> arrVrpSettings = new List<VrpSettingInfo>();
+            int totalLocationRequest = 0;
 
             string[] pickupIDs;
             string[] deliveryIDs;
@@ -1170,7 +1189,7 @@ namespace WebAPITime.Repositories
             try
             {
                 List<PickupDeliveryInfo> arrLocations = repoInitialLocation.GetAssignedLocationInfoByRouteNoDriver(routeNo, driverID);
-                List<VrpSettingInfo> arrVrpSettings = new List<VrpSettingInfo>();
+                arrVrpSettings = new List<VrpSettingInfo>();
                 VrpSettingInfo vrpSettingInfo = repoVrpSettings.GetVrpSettingInfo(routeNo, driverID);
                 arrVrpSettings.Add(vrpSettingInfo);
                 List<RouteInfo> arrRouteInfo = repoRouteInfo.GetAllRouteInfoByRouteNoDriver(routeNo, driverID);
@@ -1207,6 +1226,7 @@ namespace WebAPITime.Repositories
                 }
 
                 DataModel data = new DataModel(arrLocations, arrVrpSettings, arrAreaCovered, true, arrRouteInfo, arrAdHocPickup, arrAdHocDelivery);
+                totalLocationRequest = data.totalLocationRequests;
 
                 currVrp = VRPCalculation(routeNo, data, false, true, false, arrRouteInfo);
             }
@@ -1249,6 +1269,29 @@ namespace WebAPITime.Repositories
                     currVrp.ErrorMessage = String.Format("Error occured when deleting ad hoc order that is not feasible.");
                 }
             }
+
+            if (totalLocationRequest > 0)
+            {
+                try
+                {
+                    repoVrpLocationRequest.AddTotalRequest(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID.ToString() : "0", routeNo, totalLocationRequest);
+                }
+                catch (Exception ex)
+                {
+                    currVrp.ErrorMessage = String.Format("Error occured when saving total location request. Error message: {0}", ex.Message);
+                    Logger.LogEvent(ConfigurationManager.AppSettings["mProjName"], String.Format("VrpRepository InsertAdHocOrder(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                }
+
+            }
+
+            string eventLog = String.Format("RouteNo: {0} Action: Create ad-hoc order", routeNo);
+
+            if (currVrp.ErrorMessage != null && currVrp.ErrorMessage.Length > 0)
+            {
+                eventLog += String.Format(" Error: {0}", currVrp.ErrorMessage);
+            }
+
+            repoEvent.LogVrpEvent(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID.ToString() : "0", companyName, userName, roleID, eventLog);
 
             arrVrp.Add(currVrp);
             return arrVrp.ToArray();

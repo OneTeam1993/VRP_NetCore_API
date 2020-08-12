@@ -14,6 +14,7 @@ namespace VrpModel
         private static string mProjName = ConfigurationManager.AppSettings["mProjName"];
         public bool isSuccess = false;
         public string errorMessage = "DataModel() Exception";
+        public int totalLocationRequests = 0;
         public long[,] TimeMatrix;
         public long[,] DistanceMatrix;
         public int[,] TimeWindows;
@@ -273,7 +274,7 @@ namespace VrpModel
 
                     if (!isValidPostalCode)
                     {
-                        errorMessage = String.Format("Node {0} Invalid postal code", combinedLocation.Node);
+                        errorMessage = String.Format("{0} Order: {1} Invalid postal code", combinedLocation.OrderType, string.Join(", ", combinedLocation.OrderName));
                         return null;
                     }
 
@@ -502,7 +503,7 @@ namespace VrpModel
 
                         if (!isValidPostalCode)
                         {
-                            errorMessage = String.Format("Node {0} Invalid postal code", arrLocations[i].Node);
+                            errorMessage = String.Format("{0} Order: {1} Invalid postal code", arrLocations[i].OrderType, string.Join(",", arrLocations[i].OrderName));
                             return;
                         }
 
@@ -578,8 +579,9 @@ namespace VrpModel
                         if(TimeWindows[i, j] < TimeWindows[i, 0])
                         {
                             isSuccess = false;
-                            errorMessage = String.Format("Node {0} Invalid time window. Total service, waiting and load/unload duration: {1} minutes is more than the available time between {2} to {3}", 
-                                arrAllLocation[i].Node,
+                            errorMessage = String.Format("{0} Order: {1} Invalid time window. Total service, waiting and load/unload duration: {2} minutes is more than the available time between {3} to {4}", 
+                                arrAllLocation[i].OrderType,
+                                string.Join(", ", arrAllLocation[i].OrderName),
                                 (arrAllLocation[i].ServiceDuration + arrAllLocation[i].WaitingDuration + arrAllLocation[i].LoadDuration + arrAllLocation[i].UnloadDuration), 
                                 arrAllLocation[i].TimeWindowStart.ToString("yyyy-MM-dd HH:mm"), arrAllLocation[i].TimeWindowEnd.ToString("yyyy-MM-dd HH:mm"));
                             return;
@@ -594,7 +596,41 @@ namespace VrpModel
                 weightCapacities.Add(arrVrpSettings[i].WeightCapacity);
                 volumeCapacities.Add(arrVrpSettings[i].VolumeCapacity);
             }
-           
+
+            //Break time validation
+            bool isValidBreaktime = true;
+            for (int i = 0; i < arrVrpSettings.Count; i++)
+            {
+                int timeWindowStart = (arrVrpSettings[i].TimeWindowStart.Hour * 60) + arrVrpSettings[i].TimeWindowStart.Minute;
+                int timeWindowEnd = (arrVrpSettings[i].TimeWindowEnd.Hour * 60) + arrVrpSettings[i].TimeWindowEnd.Minute;
+                int breakTimeStart = (arrVrpSettings[i].BreakTimeStart.Hour * 60) + arrVrpSettings[i].BreakTimeStart.Minute;
+                int breakTimeEnd = (arrVrpSettings[i].BreakTimeEnd.Hour * 60) + arrVrpSettings[i].BreakTimeEnd.Minute;
+
+                if (breakTimeEnd < breakTimeStart)
+                {
+                    isValidBreaktime = false;
+                }
+                else if (breakTimeStart < timeWindowStart || breakTimeEnd > timeWindowEnd)
+                {
+                    isValidBreaktime = false;
+                }
+
+                if (!isValidBreaktime)
+                {
+                    errorMessage = String.Format("Personnel: {0} Invalid break time", arrVrpSettings[i].DriverName);
+                    return;
+                }
+            }
+
+            //Add to pickups deliveries array
+            PickupsDeliveries = new int[pickupsDeliveries.Count][];
+            for (int i = 0; i < pickupsDeliveries.Count; i++)
+            {
+                PickupsDeliveries[i] = new int[2];
+                PickupsDeliveries[i][0] = pickupsDeliveries[i][0];
+                PickupsDeliveries[i][1] = pickupsDeliveries[i][1];
+            }
+
             Starts = startLocations.ToArray();
             Ends = endLocations.ToArray();
             arrLocationWeight = arrWeight.ToArray();
@@ -605,6 +641,7 @@ namespace VrpModel
             WaitingDuration = waitingDurations.ToArray();
             WeightCapacities = weightCapacities.ToArray();
             VolumeCapacities = volumeCapacities.ToArray();
+            totalLocationRequests = locationCoordinates.Count;
 
             Task<List<long[,]>> task = CallService(locationCoordinates);
             task.Wait();
@@ -646,40 +683,7 @@ namespace VrpModel
             {
                 isSuccess = false;
                 return;
-            }
-
-            //Break time validation
-            for (int i = 0; i < arrVrpSettings.Count; i++)
-            {
-                int timeWindowStart = (arrVrpSettings[i].TimeWindowStart.Hour * 60) + arrVrpSettings[i].TimeWindowStart.Minute;
-                int timeWindowEnd = (arrVrpSettings[i].TimeWindowEnd.Hour * 60) + arrVrpSettings[i].TimeWindowEnd.Minute;
-                int breakTimeStart = (arrVrpSettings[i].BreakTimeStart.Hour * 60) + arrVrpSettings[i].BreakTimeStart.Minute;
-                int breakTimeEnd = (arrVrpSettings[i].BreakTimeEnd.Hour * 60) + arrVrpSettings[i].BreakTimeEnd.Minute;
-
-                if(breakTimeEnd < breakTimeStart)
-                {
-                    isSuccess = false;
-                }
-                else if(breakTimeStart < timeWindowStart || breakTimeEnd > timeWindowEnd)
-                {
-                    isSuccess = false;
-                }
-
-                if (!isSuccess)
-                {
-                    errorMessage = String.Format("VehicleNo {0} Invalid break time", i);
-                    return;
-                }
-            }
-
-            //Add to pickups deliveries array
-            PickupsDeliveries = new int[pickupsDeliveries.Count][];
-            for (int i = 0; i < pickupsDeliveries.Count; i++)
-            {
-                PickupsDeliveries[i] = new int[2];
-                PickupsDeliveries[i][0] = pickupsDeliveries[i][0];
-                PickupsDeliveries[i][1] = pickupsDeliveries[i][1];
-            }
+            }           
         }
 
         public async Task<List<long[,]>> CallService(List<string> locationCoordinates)
