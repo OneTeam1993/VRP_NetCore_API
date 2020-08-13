@@ -399,5 +399,37 @@ namespace WebAPITime.HelperTools
             }
             return udtVrpDelivery;
         }
+
+        public static VrpLocationRequest BuildVrpLocationRequest(MySqlDataReader dbRdr, string groupMode)
+        {           
+            VrpLocationRequest udtVrpLocationRequest = new VrpLocationRequest();
+            
+            try
+            {               
+                udtVrpLocationRequest.CompanyID = dbRdr.ToInt32("company_id");
+                udtVrpLocationRequest.RequestCount = dbRdr.ToInt32("request_count");
+                udtVrpLocationRequest.CreditLimit = dbRdr.ToInt32("credit_limit");
+                udtVrpLocationRequest.Year = dbRdr.ToInt32("year");
+
+                groupMode = groupMode.ToLower();
+
+                if (groupMode == "day" || groupMode == "month")
+                {
+                    udtVrpLocationRequest.Month = dbRdr.ToInt32("month");
+
+                    if (groupMode == "day")
+                    {
+                        udtVrpLocationRequest.Day = dbRdr.ToInt32("day");
+                    }
+                }
+                
+
+            }
+            catch (Exception ex)
+            {
+                Logger.LogEvent(mProjName, "DataMgrTools BuildVrpLocationRequest(): " + ex.Message, System.Diagnostics.EventLogEntryType.Error);
+            }
+            return udtVrpLocationRequest;
+        }
     }
 }

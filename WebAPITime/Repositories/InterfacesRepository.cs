@@ -76,5 +76,6 @@ namespace WebAPITime.Repositories
     public interface IVrpLocationRequestsRepository
     {
         bool AddTotalRequest(string companyID, string routeNo, int totalRequest);
+        VrpLocationRequestResponse Get(string companyID, string mode, string dateStart, string dateEnd);
     }
 }

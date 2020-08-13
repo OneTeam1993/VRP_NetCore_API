@@ -1,6 +1,8 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
+using System.Collections.Generic;
 using WebAPITime.HelperTools;
+using WebAPITime.Models;
 
 namespace WebAPITime.Repositories
 {
@@ -46,6 +48,178 @@ namespace WebAPITime.Repositories
 
 
             return isSuccess;
+        }
+
+        public VrpLocationRequestResponse Get(string companyID, string mode, string strDateStart, string strDateEnd)
+        {
+            VrpLocationRequestResponse vrpLocationRequestResponse = new VrpLocationRequestResponse();
+            List<VrpLocationRequest> arrVrpLocationRequest = new List<VrpLocationRequest>();
+            VrpLocationRequest currVrpLocationRequest = new VrpLocationRequest();
+            bool isValidMode = false;
+            DateTime datetimeStart = new DateTime();
+            DateTime datetimeEnd = new DateTime();
+            string select = "";
+            string leftJoin = "";
+            string whereClause = "";
+            string groupBy = "";
+            string orderBy = "";
+
+            try
+            {
+                mode = mode.ToLower();
+
+                if (mode == "year")
+                {
+                    datetimeStart = DateTime.Parse(String.Format("{0}-01-01 00:00:00", strDateStart));
+                    datetimeEnd = DateTime.Parse(String.Format("{0}-12-31 23:59:59", strDateEnd));
+
+                    select = "SELECT c.company_id, YEAR(r.date_request) 'year', SUM(r.request_count) 'request_count', c.credit_limit  ";
+
+                    groupBy = "GROUP BY c.company_id, YEAR(r.date_request) ";
+                    orderBy = "ORDER BY c.company_id ASC, YEAR(r.date_request) ASC";
+
+                    isValidMode = true;
+                }
+                else if (mode == "month")
+                {
+                    DateTime tempDatetimeStart = DateTime.Parse(strDateStart);
+                    DateTime tempDatetimeEnd = DateTime.Parse(strDateEnd);
+                    datetimeStart = DateTime.Parse(String.Format("{0}-{1}-01 00:00:00", tempDatetimeStart.Year, tempDatetimeStart.Month));
+                    datetimeEnd = DateTime.Parse(String.Format("{0}-{1}-{2} 23:59:59", tempDatetimeEnd.Year, tempDatetimeEnd.Month, DateTime.DaysInMonth(tempDatetimeEnd.Year, tempDatetimeEnd.Month)));
+
+                    select = "SELECT c.company_id, YEAR(r.date_request) 'year', MONTH(r.date_request) 'month', SUM(r.request_count) 'request_count', c.credit_limit ";
+                    groupBy = "GROUP BY c.company_id, YEAR(r.date_request), MONTH(r.date_request) ";
+                    orderBy = "ORDER BY c.company_id ASC, YEAR(r.date_request) ASC, MONTH(r.date_request) ASC";
+
+                    isValidMode = true;
+                }
+                else if (mode == "day")
+                {
+                    DateTime tempDatetimeStart = DateTime.Parse(strDateStart);
+                    DateTime tempDatetimeEnd = DateTime.Parse(strDateEnd);
+                    datetimeStart = DateTime.Parse(String.Format("{0}-{1}-{2} 00:00:00", tempDatetimeStart.Year, tempDatetimeStart.Month, tempDatetimeStart.Day));
+                    datetimeEnd = DateTime.Parse(String.Format("{0}-{1}-{2} 23:59:59", tempDatetimeEnd.Year, tempDatetimeEnd.Month, tempDatetimeEnd.Day));
+
+                    select = "SELECT c.company_id, YEAR(r.date_request) 'year', MONTH(r.date_request) 'month', DAY(r.date_request) 'day', SUM(r.request_count) 'request_count', c.credit_limit ";
+                    groupBy = "GROUP BY c.company_id, YEAR(r.date_request), MONTH(r.date_request), DAY(r.date_request) ";
+                    orderBy = "ORDER BY c.company_id ASC, YEAR(r.date_request) ASC, MONTH(r.date_request) ASC, DAY(r.date_request) ASC";
+
+                    isValidMode = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogEvent(mProjName, String.Format("VrpLocationRequestsRepository Get() Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                vrpLocationRequestResponse.IsSuccess = false;
+                vrpLocationRequestResponse.ErrorMessage = "Invalid start/end date";
+
+                return vrpLocationRequestResponse;
+            }
+            
+
+            if (isValidMode)
+            {
+                leftJoin = String.Format("LEFT JOIN vrp_location_requests r ON r.company_id = c.company_id AND r.date_request BETWEEN '{0}' AND '{1}' ", datetimeStart.ToString("yyyy-MM-dd HH:mm:ss"), datetimeEnd.ToString("yyyy-MM-dd HH:mm:ss"));
+                whereClause = String.Format("WHERE c.company_id = {0} ", companyID);                
+                string query = string.Format(select +
+                    "FROM companies c " + 
+                    leftJoin +
+                    whereClause + groupBy + orderBy);
+
+                using (MySqlConnection conn = new MySqlConnection(mConnStr))
+                {
+                    try
+                    {
+                        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                        {
+                            conn.Open();
+                            cmd.Prepare();
+
+                            using (MySqlDataReader reader = cmd.ExecuteReader())
+                            {
+                                if ((reader != null) && (reader.HasRows))
+                                {
+                                    while (reader.Read())
+                                    {
+                                        currVrpLocationRequest = DataMgrTools.BuildVrpLocationRequest(reader, mode);
+
+                                        if (currVrpLocationRequest.Year != 0)
+                                        {
+                                            if (mode == "year")
+                                            {
+                                                currVrpLocationRequest.Date = currVrpLocationRequest.Year.ToString();
+
+                                                if (currVrpLocationRequest.CreditLimit != 0)
+                                                {
+                                                    currVrpLocationRequest.Usage = Math.Round((((double)currVrpLocationRequest.RequestCount / ((double)currVrpLocationRequest.CreditLimit * 12)) * 100), 2).ToString() + " %";
+                                                }
+                                                else
+                                                {
+                                                    currVrpLocationRequest.Usage = "0% ";
+                                                }
+
+                                            }
+                                            else if (mode == "month")
+                                            {
+                                                DateTime tempDatetime = DateTime.Parse(String.Format("{0}-{1}-01", currVrpLocationRequest.Year, currVrpLocationRequest.Month));
+                                                currVrpLocationRequest.Date = tempDatetime.ToString("yyyy-MMM");
+
+                                                if (currVrpLocationRequest.CreditLimit != 0)
+                                                {
+                                                    currVrpLocationRequest.Usage = Math.Round((((double)currVrpLocationRequest.RequestCount / (double)currVrpLocationRequest.CreditLimit) * 100), 2).ToString() + " %";
+                                                }
+                                                else
+                                                {
+                                                    currVrpLocationRequest.Usage = "0 %";
+                                                }
+                                            }
+                                            else if (mode == "day")
+                                            {
+                                                DateTime tempDatetime = DateTime.Parse(String.Format("{0}-{1}-{2}", currVrpLocationRequest.Year, currVrpLocationRequest.Month, currVrpLocationRequest.Day));
+                                                currVrpLocationRequest.Date = tempDatetime.ToString("yyyy-MMM-dd");
+
+                                                if (currVrpLocationRequest.CreditLimit != 0)
+                                                {
+                                                    int daysInMonth = DateTime.DaysInMonth(currVrpLocationRequest.Year, currVrpLocationRequest.Month);
+                                                    currVrpLocationRequest.Usage = Math.Round((((double)currVrpLocationRequest.RequestCount / ((double)currVrpLocationRequest.CreditLimit / daysInMonth)) * 100), 2).ToString() + " %";
+                                                }
+                                                else
+                                                {
+                                                    currVrpLocationRequest.Usage = "0 %";
+                                                }
+                                            }
+                                        }
+                                        
+
+                                        arrVrpLocationRequest.Add(currVrpLocationRequest);
+
+                                        vrpLocationRequestResponse.IsSuccess = true;
+                                        vrpLocationRequestResponse.VrpLocationRequest = arrVrpLocationRequest;
+                                    }
+                                }
+                            }
+
+                            conn.Close();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogEvent(mProjName, String.Format("VrpLocationRequestsRepository Get() Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                        vrpLocationRequestResponse.IsSuccess = false;
+                        vrpLocationRequestResponse.ErrorMessage = String.Format("Error occurred. Exception: {0}", ex.Message);
+                    }
+                }
+            }
+            else
+            {
+                vrpLocationRequestResponse.IsSuccess = false;
+                vrpLocationRequestResponse.ErrorMessage = "Invalid mode";
+            }
+
+            
+
+            
+            return vrpLocationRequestResponse;
         }
     }
 }
