@@ -662,6 +662,9 @@ namespace WebAPITime.Repositories
                         vehicleToFeaturesConstraintMap[i] = false;
                         vehicleToZonesConstraintMap[i] = false;
 
+                        bool tempIsFeaturesConstraint = false;
+                        bool tempIsZonesConstraint = false;
+
                         #region Sub-Region: Check for features constraint
                         foreach (int featureID in droppedLocation.FeatureIDs)
                         {
@@ -669,6 +672,7 @@ namespace WebAPITime.Repositories
                             {
                                 vehicleNotFulfillFeatureConstraintCount++;
                                 vehicleToFeaturesConstraintMap[i] = true;
+                                tempIsFeaturesConstraint = true;
                                 break;
                             }
                         }
@@ -679,11 +683,13 @@ namespace WebAPITime.Repositories
                         {
                             vehicleNotFulfillZoneConstraintCount++;
                             vehicleToZonesConstraintMap[i] = true;
+                            tempIsZonesConstraint = true;
                         }
                         #endregion
 
                         #region Sub-Region: Check for distance constraint
-                        if ((lstVehicle[i].TotalDistance * 1000) + data.DistanceMatrix[i, droppedLocation.Node] + data.DistanceMatrix[droppedLocation.Node, lstVehicle[i].Nodes[lstVehicle[i].Nodes.Length - 1].NodeID] > (data.arrVrpSettings[0].DistanceCapacity * 1000))
+                        if ((lstVehicle[i].TotalDistance * 1000) + data.DistanceMatrix[i, droppedLocation.Node] + data.DistanceMatrix[droppedLocation.Node, lstVehicle[i].Nodes[lstVehicle[i].Nodes.Length - 1].NodeID] > (data.arrVrpSettings[0].DistanceCapacity * 1000) 
+                            || tempIsFeaturesConstraint || tempIsZonesConstraint)
                         {
                             vehicleNotFulfillDistanceConstraintCount++;
                         }
@@ -692,7 +698,7 @@ namespace WebAPITime.Repositories
                         #region Sub-Region: Check for weight constraint
                         if (data.arrVrpSettings[0].WeightCapacity > 0)
                         {
-                            if(lstVehicle[i].TotalWeightLoad + droppedLocation.TotalWeight > lstVehicle[i].WeightCapacity)
+                            if(lstVehicle[i].TotalWeightLoad + droppedLocation.TotalWeight > lstVehicle[i].WeightCapacity || tempIsFeaturesConstraint || tempIsZonesConstraint)
                             {
                                 vehicleNotFulfillWeightConstraintCount++;
                             }
@@ -702,7 +708,7 @@ namespace WebAPITime.Repositories
                         #region Sub-Region: Check for volume constraint
                         if (data.arrVrpSettings[0].VolumeCapacity > 0)
                         {
-                            if (lstVehicle[i].TotalVolumeLoad + droppedLocation.TotalVolume > lstVehicle[i].VolumeCapacity)
+                            if (lstVehicle[i].TotalVolumeLoad + droppedLocation.TotalVolume > lstVehicle[i].VolumeCapacity || tempIsFeaturesConstraint || tempIsZonesConstraint)
                             {
                                 vehicleNotFulfillVolumeConstraintCount++;
                             }
