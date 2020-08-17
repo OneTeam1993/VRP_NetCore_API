@@ -431,5 +431,21 @@ namespace WebAPITime.HelperTools
             }
             return udtVrpLocationRequest;
         }
+
+        public static PushNotification BuildPushNotification(MySqlDataReader dbRdr)
+        {
+            PushNotification udtPushNotification = new PushNotification();
+
+            try
+            {
+                udtPushNotification.TimeWindowStart = dbRdr.ToDateTime("time_window_start");
+                udtPushNotification.Token = dbRdr.ToString("token");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogEvent(mProjName, "DataMgrTools BuildPushNotification(): " + ex.Message, System.Diagnostics.EventLogEntryType.Error);
+            }
+            return udtPushNotification;
+        }
     }
 }

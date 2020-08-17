@@ -8,6 +8,8 @@ using VrpModel;
 using WebAPITime.Repositories;
 using WebAPITime.HelperTools;
 using WebAPITime.Models;
+using WebAPITime.Services;
+using System.Threading.Tasks;
 
 namespace WebAPITime.Repositories
 {
@@ -568,9 +570,10 @@ namespace WebAPITime.Repositories
             return vrpInfo;
         }
 
-        public bool SaveRoutes(string routeNo)
+        public async Task<ResponseSaveRoutes> SaveRoutesAsync(string routeNo)
         {
-            bool retVal = false;
+            ResponseSaveRoutes responseSaveRoutes = new ResponseSaveRoutes();
+            responseSaveRoutes.IsSuccess = false;
             string currentDateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
             List<RouteInfo> arrRoutes = GetAllRouteInfoByRouteNo(routeNo);            
 
@@ -602,7 +605,7 @@ namespace WebAPITime.Repositories
                     {
                         myCmd.CommandType = CommandType.Text;
                         myCmd.ExecuteNonQuery();
-                        retVal = true;
+                        responseSaveRoutes.IsSuccess = true;
                     }
                     conn.Close();
                 }
@@ -610,9 +613,37 @@ namespace WebAPITime.Repositories
             catch (Exception ex)
             {
                 Logger.LogEvent(mProjName, String.Format("RouteInfoRepository SaveRoutes() Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                responseSaveRoutes.ErrorMessage = "Failed to save routes";
             }
+
+            if (!responseSaveRoutes.IsSuccess)
+            {
+                return responseSaveRoutes;
+            }
+
+            try
+            {
+                List<PushNotification> tokens = GetAssetTokensByRouteNo(routeNo);
+
+                if (tokens.Count > 0)
+                {
+                    PushNotificationService pushNotification = new PushNotificationService();
+                    if (!(await pushNotification.NewRoutesNotification(tokens, "save_route")))
+                    {
+                        responseSaveRoutes.IsSuccess = false;
+                        responseSaveRoutes.ErrorMessage = "Saved routes but fail to send push notification";
+                    }
+                }               
+            }
+            catch (Exception ex)
+            {
+                responseSaveRoutes.IsSuccess = false;
+                responseSaveRoutes.ErrorMessage = "Saved routes but fail to send push notification";
+                Logger.LogEvent(mProjName, String.Format("RouteInfoRepository SaveRoutes() Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);               
+            }
+
             
-            return retVal;
+            return responseSaveRoutes;
         }
 
         public bool Update(RouteInfo currRoute)
@@ -828,6 +859,48 @@ namespace WebAPITime.Repositories
             }
 
             return responseTimelineRoutes;
+        }
+
+        public List<PushNotification> GetAssetTokensByRouteNo(string routeNo)
+        {
+            List<PushNotification> tokens = new List<PushNotification>();
+
+            string query = string.Format("SELECT s.time_window_start, a.token " +
+                "FROM vrp_settings s " +
+                "LEFT JOIN assets a ON s.asset_id = a.asset_id " +
+                "WHERE s.route_no = @routeNo");
+
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(mConnStr))
+                {
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        conn.Open();
+                        cmd.Prepare();
+                        cmd.Parameters.AddWithValue("@routeNo", routeNo);
+
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if ((reader != null) && (reader.HasRows))
+                            {
+                                while (reader.Read())
+                                {
+                                    tokens.Add(DataMgrTools.BuildPushNotification(reader));
+                                }
+                            }
+                        }
+
+                        conn.Close();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogEvent(mProjName, String.Format("RouteInfoRepository GetAssetTokensByRouteNo() Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+            }
+
+            return tokens;
         }
     }
 }

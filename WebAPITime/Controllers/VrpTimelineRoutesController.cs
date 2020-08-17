@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WebAPITime.Repositories;
 using WebAPITime.Models;
-using WebAPITime.Repositories;
 
 namespace WebAPITime.Controllers
 {

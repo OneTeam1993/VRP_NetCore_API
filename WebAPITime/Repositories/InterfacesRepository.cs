@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using VrpModel;
 using WebAPITime.Models;
 
@@ -11,7 +12,7 @@ namespace WebAPITime.Repositories
         IEnumerable<VrpInfo> GetAll(string routeNo, string companyName, string userName, string roleID);
         VrpAvailableTimeInfo GetAvailableTimeForAdhocOrder(string routeNo, long driverID);
         IEnumerable<VrpInfo> CheckAdHocOrderFeasibility(string routeNo, long driverID, [FromBody] TempAdHocLocation tempAdHocLocation);
-        IEnumerable<VrpInfo> InsertAdHocOrder(string routeNo, long driverID, string pickupID, string deliveryID, string companyName, string userName, string roleID);
+        Task<IEnumerable<VrpInfo>> InsertAdHocOrderAsync(string routeNo, long driverID, string pickupID, string deliveryID, string companyName, string userName, string roleID);
         VrpInfo VRPCalculation(string routeNo, DataModel data, bool isCheckAdHocFeasibility = false, bool isInsertAdHoc = false, bool isRecalculateAfterDelete = false, List<RouteInfo> arrRouteInfo = null);
     }
 
@@ -35,11 +36,12 @@ namespace WebAPITime.Repositories
         List<RouteInfo> GetAllRouteInfoByRouteNoFlag(string routeNo, string flag);
         RouteInfo Get(long id);
         VrpInfo AddGeneratedRoutes(string routeNo, VrpInfo vrpInfo, List<VrpSettingInfo> arrVrpSettings, List<PickupDeliveryInfo> arrAllLocation, bool isAdHocCalculation, List<RouteInfo> arrRouteInfo = null);
-        bool SaveRoutes(string routeNo);
+        Task<ResponseSaveRoutes> SaveRoutesAsync(string routeNo);
         bool Update(RouteInfo routeInfo);
         ResponseRouteInfoDeletion Remove(long routeID, bool isRecalculation, string companyID, string companyName, string userName, string roleID);
         CustomerOrder GetCustomerOrder(long RouteID, int CustomerID);
         ResponseTimelineRoutes GetTimelineRoutes(string routeNo, string flag);
+        List<PushNotification> GetAssetTokensByRouteNo(string routeNo);
     }
 
     public interface IAreaCoveredInfoRepository

@@ -53,4 +53,10 @@ namespace WebAPITime.Models
         public string ErrorMessage { get; set; }
         public List<RouteInfo> Routes { get; set; }
     }
+
+    public class ResponseSaveRoutes
+    {
+        public bool IsSuccess { get; set; }
+        public string ErrorMessage { get; set; }
+    }
 }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using WebAPITime.Repositories;
 using WebAPITime.Models;
+using System.Threading.Tasks;
 
 namespace WebAPITime.Controllers
 {
@@ -23,19 +24,19 @@ namespace WebAPITime.Controllers
         }
 
         [HttpPost]
-        public bool PostSaveRoute(string routeNo, string companyID, string companyName, string userName, string roleID)
+        public async Task<ResponseSaveRoutes> PostSaveRouteAsync(string routeNo, string companyID, string companyName, string userName, string roleID)
         {
             string eventLog = String.Format("RouteNo: {0} Action: Save Route", routeNo);
-            bool isSuccess = repoRouteInfo.SaveRoutes(routeNo);
+            ResponseSaveRoutes responseSaveRoutes = await repoRouteInfo.SaveRoutesAsync(routeNo);
             
-            if (!isSuccess)
+            if (!responseSaveRoutes.IsSuccess)
             {
-                eventLog += " Error Message: Failed to save route";
+                eventLog += " Error Message: " + responseSaveRoutes.ErrorMessage;
             }
 
             repoEvent.LogVrpEvent(companyID, companyName, userName, roleID, eventLog);
 
-            return isSuccess;
+            return responseSaveRoutes;
         }
 
         [HttpPut]

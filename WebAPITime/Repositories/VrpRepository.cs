@@ -1,18 +1,18 @@
 ﻿using Google.OrTools.ConstraintSolver;
 using Google.Protobuf.WellKnownTypes;
-using Microsoft.AspNetCore.Routing;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 using VrpModel;
 using WebAPITime.HelperTools;
 using WebAPITime.Models;
-using WebAPITime.Repositories;
+using WebAPITime.Services;
 
 namespace WebAPITime.Repositories
 {
     public class VrpRepository : IVrpRepository
     {
+        string mProjName = ConfigurationManager.AppSettings["mProjName"];
         private static readonly IInitialLocationRepository repoInitialLocation = new InitialLocationRepository();
         private static readonly IVrpSettingsRepository repoVrpSettings = new VrpSettingsRepository();
         private static readonly IRouteInfoRepository repoRouteInfo = new RouteInfoRepository();
@@ -59,7 +59,7 @@ namespace WebAPITime.Repositories
             catch(Exception ex)
             {
                 currVrp.ErrorMessage = String.Format("Error occured when calculating route. Error message: {0}", ex.Message);
-                Logger.LogEvent(ConfigurationManager.AppSettings["mProjName"], String.Format("VrpRepository GetAll(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                Logger.LogEvent(mProjName, String.Format("VrpRepository GetAll(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
             }
 
             if (totalLocationRequest > 0)
@@ -71,7 +71,7 @@ namespace WebAPITime.Repositories
                 catch (Exception ex)
                 {
                     currVrp.ErrorMessage = String.Format("Error occured when saving total location request. Error message: {0}", ex.Message);
-                    Logger.LogEvent(ConfigurationManager.AppSettings["mProjName"], String.Format("VrpRepository GetAll(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                    Logger.LogEvent(mProjName, String.Format("VrpRepository GetAll(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
                 }
 
             }
@@ -425,7 +425,7 @@ namespace WebAPITime.Repositories
             catch(Exception ex)
             {
                 currVrp.ErrorMessage = String.Format("Error occured when calculating route. Error message: {0}", ex.Message);
-                Logger.LogEvent(ConfigurationManager.AppSettings["mProjName"], String.Format("VrpRepository GetAll(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                Logger.LogEvent(mProjName, String.Format("VrpRepository GetAll(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
             }
 
             return currVrp;
@@ -1030,7 +1030,7 @@ namespace WebAPITime.Repositories
             catch(Exception ex)
             {
                 vrpInfo.ErrorMessage = String.Format("Error occured when calculationg route. Error message: {0}", ex.Message);
-                Logger.LogEvent(ConfigurationManager.AppSettings["mProjName"], String.Format("VrpRepository GetVRPInfo(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                Logger.LogEvent(mProjName, String.Format("VrpRepository GetVRPInfo(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
             }
             
 
@@ -1180,7 +1180,7 @@ namespace WebAPITime.Repositories
             return arrVrp.ToArray();
         }
 
-        public IEnumerable<VrpInfo> InsertAdHocOrder(string routeNo, long driverID, string pickupID, string deliveryID, string companyName, string userName, string roleID)
+        public async Task<IEnumerable<VrpInfo>> InsertAdHocOrderAsync(string routeNo, long driverID, string pickupID, string deliveryID, string companyName, string userName, string roleID)
         {
             List<VrpInfo> arrVrp = new List<VrpInfo>();
             VrpInfo currVrp = new VrpInfo();
@@ -1238,8 +1238,30 @@ namespace WebAPITime.Repositories
             }
             catch (Exception ex)
             {
-                Logger.LogEvent(ConfigurationManager.AppSettings["mProjName"], String.Format("VrpRepository InsertAdHocOrder(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                Logger.LogEvent(mProjName, String.Format("VrpRepository InsertAdHocOrder(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
                 currVrp.ErrorMessage = String.Format("Error occured when calculating route. Error message: {0}", ex.Message);
+            }
+
+            if (currVrp.isAdHocFeasible)
+            {
+                try
+                {
+                    List<PushNotification> tokens = repoRouteInfo.GetAssetTokensByRouteNo(routeNo);
+
+                    if (tokens.Count > 0)
+                    {
+                        PushNotificationService pushNotification = new PushNotificationService();
+                        if (!(await pushNotification.NewRoutesNotification(tokens, "adhoc_route")))
+                        {
+                            currVrp.ErrorMessage = "Created route but fail to send push notification";
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    currVrp.ErrorMessage = "Saved routes but fail to send push notification";
+                    Logger.LogEvent(mProjName, String.Format("VrpRepository InsertAdHocOrder(): Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                }
             }
 
             if (!currVrp.isAdHocFeasible && (arrAdHocPickup != null || arrAdHocDelivery != null))
@@ -1271,7 +1293,7 @@ namespace WebAPITime.Repositories
                 }
                 catch(Exception ex)
                 {
-                    Logger.LogEvent(ConfigurationManager.AppSettings["mProjName"], String.Format("VrpRepository InsertAdHocOrder(): Error occured when deleting ad hoc order that is not feasible. Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                    Logger.LogEvent(mProjName, String.Format("VrpRepository InsertAdHocOrder(): Error occured when deleting ad hoc order that is not feasible. Exception: {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
                     currVrp.ErrorMessage = String.Format("Error occured when deleting ad hoc order that is not feasible.");
                 }
             }
@@ -1285,7 +1307,7 @@ namespace WebAPITime.Repositories
                 catch (Exception ex)
                 {
                     currVrp.ErrorMessage = String.Format("Error occured when saving total location request. Error message: {0}", ex.Message);
-                    Logger.LogEvent(ConfigurationManager.AppSettings["mProjName"], String.Format("VrpRepository InsertAdHocOrder(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+                    Logger.LogEvent(mProjName, String.Format("VrpRepository InsertAdHocOrder(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
                 }
 
             }
