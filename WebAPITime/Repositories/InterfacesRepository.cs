@@ -11,7 +11,6 @@ namespace WebAPITime.Repositories
     {
         IEnumerable<VrpInfo> GetAll(string routeNo, string companyName, string userName, string roleID);
         VrpAvailableTimeInfo GetAvailableTimeForAdhocOrder(string routeNo, long driverID);
-        IEnumerable<VrpInfo> CheckAdHocOrderFeasibility(string routeNo, long driverID, [FromBody] TempAdHocLocation tempAdHocLocation);
         Task<IEnumerable<VrpInfo>> InsertAdHocOrderAsync(string routeNo, long driverID, string pickupID, string deliveryID, string companyName, string userName, string roleID);
         VrpInfo VRPCalculation(string routeNo, DataModel data, bool isCheckAdHocFeasibility = false, bool isInsertAdHoc = false, bool isRecalculateAfterDelete = false, List<RouteInfo> arrRouteInfo = null);
     }

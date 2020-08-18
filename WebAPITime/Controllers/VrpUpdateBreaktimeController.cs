@@ -1,23 +1,23 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
 using VrpModel;
 using WebAPITime.Repositories;
-using WebAPITime.Models;
 
 namespace WebAPITime.Controllers
 {
     [EnableCors("AllowAll")]
     [Route("api/[controller]")]
     [ApiController]
-    public class VrpAvailableTimeForAdHocController : ControllerBase
+    public class VrpUpdateBreaktimeController : ControllerBase
     {
         private static readonly IVrpRepository vrpRepository = new VrpRepository();
 
-        [HttpGet]
-        public VrpAvailableTimeInfo Get(string routeNo, long driverID)
-        {
-            return vrpRepository.GetAvailableTimeForAdhocOrder(routeNo, driverID);
-        }
+        //[HttpPost]
+        //public IEnumerable<VrpInfo> UpdateBreaktime(string routeNo, long driverID, DateTime breaktimeStart, DateTime breaktimeEnd, string companyName, string userName, string roleID)
+        //{
+        //    return ;
+        //}
     }
 }

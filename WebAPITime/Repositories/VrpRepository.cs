@@ -1127,59 +1127,6 @@ namespace WebAPITime.Repositories
             return vrpAvailableTimeInfo;
         }
 
-        public IEnumerable<VrpInfo> CheckAdHocOrderFeasibility(string routeNo, long driverID, TempAdHocLocation tempAdHocLocation)
-        {
-            List<VrpInfo> arrVrp = new List<VrpInfo>();
-            VrpInfo currVrp = new VrpInfo();
-            
-            try
-            {
-                List<PickupDeliveryInfo> arrLocations = repoInitialLocation.GetAssignedLocationInfoByRouteNoDriver(routeNo, driverID);
-                List<VrpSettingInfo> arrVrpSettings = new List<VrpSettingInfo>();
-                VrpSettingInfo vrpSettingInfo = repoVrpSettings.GetVrpSettingInfo(routeNo, driverID);
-                arrVrpSettings.Add(vrpSettingInfo);
-                List<RouteInfo> arrRouteInfo = repoRouteInfo.GetAllRouteInfoByRouteNoDriver(routeNo, driverID);
-                List<AreaCoveredInfo> arrAreaCovered = repoAreaCoveredInfo.GetAllByCompanyID(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID : 0);
-
-                PickupDeliveryInfo adHocLocation = new PickupDeliveryInfo();
-                //adHocLocation.OrderType = "Pickup";
-                adHocLocation.PickupIDs = new List<long>();
-                adHocLocation.DeliveryIDs = new List<long>();
-                adHocLocation.RouteNo = routeNo;
-                adHocLocation.PriorityID = 2;
-                adHocLocation.DriverID = driverID;
-                adHocLocation.DriverName = arrVrpSettings[0].DriverName;
-                adHocLocation.Lat = tempAdHocLocation.Lat;
-                adHocLocation.Long = tempAdHocLocation.Long;
-                adHocLocation.Address = tempAdHocLocation.Address;
-                adHocLocation.PostalCode = tempAdHocLocation.PostalCode;
-                adHocLocation.TotalWeight = 0;
-                adHocLocation.TotalVolume = 0;
-                adHocLocation.ServiceDuration = 0;
-                adHocLocation.LoadDuration = 0;
-                adHocLocation.UnloadDuration = 0;
-                adHocLocation.WaitingDuration = 0;
-                adHocLocation.TimeWindowStart = tempAdHocLocation.TimeWindowStart;
-                adHocLocation.TimeWindowEnd = tempAdHocLocation.TimeWindowEnd;
-                adHocLocation.PickupFromIDs = new List<long>();
-                adHocLocation.FeatureIDs = new List<int>();
-                adHocLocation.Accessories = new List<long>();
-
-                arrLocations.Add(adHocLocation);
-
-                DataModel data = new DataModel(arrLocations, arrVrpSettings, arrAreaCovered, true, arrRouteInfo);
-
-                currVrp = VRPCalculation(routeNo, data, true);
-            }
-            catch(Exception ex)
-            {
-                currVrp.ErrorMessage = String.Format("Error occured when calculating route. Error message: {0}", ex.Message);
-            }
-
-            arrVrp.Add(currVrp);
-            return arrVrp.ToArray();
-        }
-
         public async Task<IEnumerable<VrpInfo>> InsertAdHocOrderAsync(string routeNo, long driverID, string pickupID, string deliveryID, string companyName, string userName, string roleID)
         {
             List<VrpInfo> arrVrp = new List<VrpInfo>();
@@ -1324,6 +1271,50 @@ namespace WebAPITime.Repositories
             arrVrp.Add(currVrp);
             return arrVrp.ToArray();
         }
-        
+
+        //public IEnumerable<VrpInfo> UpdateBreaktime(string routeNo, long driverID, DateTime breaktimeStart, DateTime breaktimeEnd, string companyName, string userName, string roleID)
+        //{
+        //    List<VrpInfo> arrVrp = new List<VrpInfo>();
+        //    VrpInfo currVrp = new VrpInfo();
+        //    List<VrpSettingInfo> arrVrpSettings = new List<VrpSettingInfo>();
+        //    int totalLocationRequest = 0;
+
+        //    try
+        //    {
+        //        List<PickupDeliveryInfo> arrLocations = repoInitialLocation.GetAssignedLocationInfoByRouteNoDriver(routeNo, driverID);
+        //        arrVrpSettings = new List<VrpSettingInfo>();
+        //        VrpSettingInfo vrpSettingInfo = repoVrpSettings.GetVrpSettingInfo(routeNo, driverID);
+        //        arrVrpSettings.Add(vrpSettingInfo);
+        //        List<RouteInfo> arrRouteInfo = repoRouteInfo.GetAllRouteInfoByRouteNoDriver(routeNo, driverID);
+        //        List<AreaCoveredInfo> arrAreaCovered = repoAreaCoveredInfo.GetAllByCompanyID(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID : 0);
+
+        //        for (int i=arrRouteInfo.Count-1; i>=0; i--)
+        //        {
+        //            if (arrRouteInfo[i].Flag > 1)
+        //            {
+        //                int totalDuration = arrRouteInfo[i].PickupDeliveryInfo.ServiceDuration + arrRouteInfo[i].PickupDeliveryInfo.WaitingDuration + arrRouteInfo[i].PickupDeliveryInfo.UnloadDuration + arrRouteInfo[i].PickupDeliveryInfo.LoadDuration;
+        //                DateTime latestDatetime = arrRouteInfo[i].DepartureTime == Convert.ToDateTime("1/1/2000 00:00:00") ? arrRouteInfo[i].ArrivalTime.AddMinutes(totalDuration) : arrRouteInfo[i].DepartureTime;
+
+        //                if (breaktimeEnd < latestDatetime)
+        //                {
+        //                    currVrp.ErrorMessage = String.Format("Invalid breaktime window, completed/incomplete routes existed with the time window");
+        //                }
+
+        //                break;
+        //            }                   
+        //        }
+
+        //        DataModel data = new DataModel(arrLocations, arrVrpSettings, arrAreaCovered, true, arrRouteInfo, arrAdHocPickup, arrAdHocDelivery);
+        //        totalLocationRequest = data.totalLocationRequests;
+
+        //        currVrp = VRPCalculation(routeNo, data, false, true, false, arrRouteInfo);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Logger.LogEvent(mProjName, String.Format("VrpRepository UpdateBreaktime(): {0}", ex.Message), System.Diagnostics.EventLogEntryType.Error);
+        //        currVrp.ErrorMessage = String.Format("Error occured when calculating route. Error message: {0}", ex.Message);
+        //    }
+        //}
+
     }
 }
