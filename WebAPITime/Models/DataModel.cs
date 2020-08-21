@@ -658,7 +658,6 @@ namespace VrpModel
             WaitingDuration = waitingDurations.ToArray();
             WeightCapacities = weightCapacities.ToArray();
             VolumeCapacities = volumeCapacities.ToArray();
-            totalLocationRequests = locationCoordinates.Count;
 
             Task<List<long[,]>> task = CallService(locationCoordinates);
             task.Wait();
@@ -707,33 +706,30 @@ namespace VrpModel
         {
             ResponseModelLocationIQ responseModel = new ResponseModelLocationIQ();
             Service service = new Service();
-            string origin = string.Empty;
-            string destination = string.Empty;
+            
             List<long[,]> matrixList = new List<long[,]>();
             long[,] distanceArr = new long[locationCoordinates.Count, locationCoordinates.Count];
             long[,] timeArr = new long[locationCoordinates.Count, locationCoordinates.Count];
+            int locationBatchSize = 25;
+            int requestPerSecond = 34;
+            
 
-            List<string> newlist = new List<string>();
-
-            int batchSize = 1;
-            int listCount = batchSize;
-            int remainder = locationCoordinates.Count % batchSize;
-            int numOfBatches = locationCoordinates.Count / batchSize;
-            numOfBatches = remainder > 0 ? numOfBatches + 1 : numOfBatches;
+            //int requestForEachLocation = locationCoordinates.Count > locationBatchSize ? 1 + ((locationCoordinates.Count - locationBatchSize) / (locationBatchSize - 1)) + ((locationCoordinates.Count - locationBatchSize) % (locationBatchSize - 1) > 0 ? 1 : 0) : 0;
 
             try
             {
                 List<Task<IRestResponse>> TaskList = new List<Task<IRestResponse>>();
-                for (int i = 0; i < numOfBatches; i++)
-                {
-                    if (i * batchSize + listCount > locationCoordinates.Count)
-                        listCount = remainder;
+                List<Task<IRestResponse>> ResultTaskList = new List<Task<IRestResponse>>();
 
-                    newlist = locationCoordinates.GetRange(i * batchSize, listCount);
-                    origin = string.Join(";", newlist);
-                    for (int j = 0; j < numOfBatches; j++)
+                for (int i = 0; i < locationCoordinates.Count; i++)
+                {                   
+                    string origin = locationCoordinates[i];
+                    string destination = string.Empty;
+                    int locationCount = 1;
+
+                    for (int j = 0; j < locationCoordinates.Count; j++)
                     {
-                        if (i != j)
+                        if (j != i)
                         {
                             if (destination.Length > 0)
                             {
@@ -741,47 +737,63 @@ namespace VrpModel
                             }
 
                             destination += locationCoordinates[j];
+                            locationCount++;
+                        }
+
+                        if (j == locationCoordinates.Count - 1 || (locationCount == locationBatchSize && j+1 != i))
+                        {
+                            TaskList.Add(service.GetAsyncDistance(origin, destination));
+                            totalLocationRequests++;
+                            destination = string.Empty;
+                            locationCount = 1;
+
+                            if(TaskList.Count == requestPerSecond)
+                            {
+                                await Task.Delay(1000);
+                                //await Task.WhenAll(TaskList.ToArray());
+                                ResultTaskList.AddRange(TaskList);
+                                TaskList = new List<Task<IRestResponse>>();
+                            }
                         }
                     }
-                    TaskList.Add(service.GetAsyncDistance(origin, destination));
-                    destination = string.Empty;
                 }
 
                 await Task.WhenAll(TaskList.ToArray());
+                ResultTaskList.AddRange(TaskList);
 
-                for (int i = 0; i < numOfBatches; i++)
+                int currTaskIndex = 0;
+                
+                for (int i = 0; i < locationCoordinates.Count; i++)
                 {
-                    if (i * batchSize + listCount > locationCoordinates.Count)
-                        listCount = remainder;
+                    int locationCount = 1;
 
-                    newlist = locationCoordinates.GetRange(i * batchSize, listCount);
-                    origin = string.Join(";", newlist);
-
-                    var result = TaskList[i].Result;
-                    if (result != null && result.StatusCode == System.Net.HttpStatusCode.OK)
+                    for (int j = 0; j < locationCoordinates.Count; j++)
                     {
+                        var result = ResultTaskList[currTaskIndex].Result;
                         responseModel = JsonConvert.DeserializeObject<ResponseModelLocationIQ>(result.Content);
-                        int k = 1;
-                        for (int j = 0; j < locationCoordinates.Count; j++, k++)
+
+                        if (result != null && result.StatusCode == System.Net.HttpStatusCode.OK)
                         {
-                            if (origin == locationCoordinates[j])
+
+                            if (j == i)
                             {
-                                timeArr[i * batchSize, j] = 0;
-                                distanceArr[i * batchSize, j] = 0;
-                                k = j;
+                                timeArr[i, j] = 0;
+                                distanceArr[i, j] = 0;
                             }
                             else
                             {
+                                timeArr[i, j] = responseModel.Durations[0][locationCount] / 60;
+                                distanceArr[i, j] = responseModel.Distances[0][locationCount];
 
-                                timeArr[i * batchSize, j] = responseModel.Durations[0][k] / 60;
-                                distanceArr[i * batchSize, j] = responseModel.Distances[0][k];
+                                locationCount++;
                             }
                         }
-                    }
-                    else
-                    {
-                        errorMessage = String.Format("Cannot find address");
-                        return null;
+                                              
+                        if (j == locationCoordinates.Count - 1 || (locationCount == locationBatchSize && j + 1 != i))
+                        {
+                            currTaskIndex++;
+                            locationCount = 1;
+                        }
                     }
                 }
             }
@@ -796,7 +808,5 @@ namespace VrpModel
             matrixList.Add(distanceArr);
             return matrixList;
         }
-
-
     }
 }
