@@ -79,4 +79,11 @@ namespace WebAPITime.Repositories
         bool AddTotalRequest(string companyID, string routeNo, int totalRequest);
         VrpLocationRequestResponse Get(string companyID, string mode, string dateStart, string dateEnd);
     }
+
+    public interface IVrpRouteReportRepository
+    {
+        VrpRouteReportResponse GetRouteReport(long routeID);
+        VrpRouteReportResponse UpdateVrpRouteReport(string routeNo, long driverID, long routeID, DateTime departureTime, DateTime arrivalTime, DateTime jobEndTime);
+        VrpRouteReport GetRouteReportByRouteID(string routeID);
+    }
 }

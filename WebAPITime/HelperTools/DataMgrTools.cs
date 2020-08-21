@@ -447,5 +447,33 @@ namespace WebAPITime.HelperTools
             }
             return udtPushNotification;
         }
+
+        public static VrpRouteReport BuildVrpRouteReport(MySqlDataReader dbRdr)
+        {
+            VrpRouteReport udtVrpRouteReport = new VrpRouteReport();
+
+            try
+            {
+                udtVrpRouteReport.VrpRouteID = dbRdr.ToInt64("vrp_routes_id");
+                udtVrpRouteReport.FromVrpRouteID = dbRdr.ToInt64("from_vrp_routes_id");
+                udtVrpRouteReport.EstDepartureTime = dbRdr.ToDateTime("est_departure_time");
+                udtVrpRouteReport.ActualDepartureTime = dbRdr.ToDateTime("actual_departure_time");
+                udtVrpRouteReport.DepartureTimeStatus = dbRdr.ToString("status_departure_time");
+                udtVrpRouteReport.EstArrivalTime = dbRdr.ToDateTime("est_arrival_time");
+                udtVrpRouteReport.ActualArrivalTime = dbRdr.ToDateTime("actual_arrival_time");
+                udtVrpRouteReport.ArrivalTimeStatus = dbRdr.ToString("status_arrival_time");
+                udtVrpRouteReport.TravelDuration = dbRdr.ToInt32("travel_duration");
+                udtVrpRouteReport.JobStartTime = dbRdr.ToDateTime("job_start_time");
+                udtVrpRouteReport.JobEndTime = dbRdr.ToDateTime("job_end_time");
+                udtVrpRouteReport.JobDuration = dbRdr.ToInt32("job_duration");
+                udtVrpRouteReport.EstJobDuration = dbRdr.ToInt32("est_job_duration");
+
+            }
+            catch (Exception ex)
+            {
+                Logger.LogEvent(mProjName, "DataMgrTools BuildVrpRouteReport(): " + ex.Message, System.Diagnostics.EventLogEntryType.Error);
+            }
+            return udtVrpRouteReport;
+        }
     }
 }
