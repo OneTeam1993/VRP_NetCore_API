@@ -86,4 +86,11 @@ namespace WebAPITime.Repositories
         VrpRouteReportResponse UpdateVrpRouteReport(string routeNo, long driverID, long routeID, DateTime departureTime, DateTime arrivalTime, DateTime jobEndTime);
         VrpRouteReport GetRouteReportByRouteID(string routeID);
     }
+
+    public interface IDriverReportRepository
+    {
+        DriverReportResponse GetDriverReport(long driverID, DateTime recordDatetime);
+        DriverReportResponse UpdateDriverReport(long driverID, DateTime worktimeStart, DateTime worktimeEnd);
+        DriverReport GetDriverReportByDate(long driverID, DateTime recordDatetime);
+    }
 }

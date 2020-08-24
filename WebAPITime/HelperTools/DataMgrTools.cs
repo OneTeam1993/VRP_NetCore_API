@@ -475,5 +475,47 @@ namespace WebAPITime.HelperTools
             }
             return udtVrpRouteReport;
         }
+
+        public static DriverReport BuildDriverReport(MySqlDataReader dbRdr)
+        {
+            DriverReport udtDriverReport = new DriverReport();
+
+            try
+            {
+                udtDriverReport.DriverID = dbRdr.ToInt64("driver_id");
+                udtDriverReport.ScheduledWorkTimeStart = dbRdr.ToDateTime("scheduled_work_time_start");
+                udtDriverReport.ActualWorkTimeStart = dbRdr.ToDateTime("actual_work_time_start");
+                udtDriverReport.WorkTimeStartStatus = dbRdr.ToString("status_work_time_start");
+                udtDriverReport.ScheduledWorkTimeEnd = dbRdr.ToDateTime("scheduled_work_time_end");
+                udtDriverReport.ActualWorkTimeEnd = dbRdr.ToDateTime("actual_work_time_end");
+                udtDriverReport.WorkTimeEndStatus = dbRdr.ToString("status_work_time_end");
+                udtDriverReport.WorkDuration = dbRdr.ToInt32("work_duration");
+
+            }
+            catch (Exception ex)
+            {
+                Logger.LogEvent(mProjName, "DataMgrTools BuildDriverReport(): " + ex.Message, System.Diagnostics.EventLogEntryType.Error);
+            }
+            return udtDriverReport;
+        }
+
+        public static DriverSchedule BuildDriverSchedule(MySqlDataReader dbRdr)
+        {
+            DriverSchedule udtDriverSchedule = new DriverSchedule();
+
+            try
+            {
+                udtDriverSchedule.DriverID = dbRdr.ToInt64("driver_id");
+                udtDriverSchedule.TimeWindowStart = dbRdr.ToString("time_window_start");
+                udtDriverSchedule.TimeWindowEnd = dbRdr.ToString("time_window_end");
+                udtDriverSchedule.DayID = dbRdr.ToInt32("day_id");
+
+            }
+            catch (Exception ex)
+            {
+                Logger.LogEvent(mProjName, "DataMgrTools BuildDriverSchedule(): " + ex.Message, System.Diagnostics.EventLogEntryType.Error);
+            }
+            return udtDriverSchedule;
+        }
     }
 }

@@ -109,13 +109,20 @@ namespace WebAPITime.Repositories
                         vrpRouteReport.ArrivalTimeStatus = "On-Time";
                     }
 
-                    vrpRouteReport.TravelDuration = (int)vrpRouteReport.ActualArrivalTime.Subtract(vrpRouteReport.ActualDepartureTime).TotalMinutes;
+                    if (vrpRouteReport.ActualDepartureTime != Convert.ToDateTime("1/1/2000 00:00:00") && vrpRouteReport.ActualDepartureTime != Convert.ToDateTime("1/1/0001 00:00:00"))
+                    {
+                        vrpRouteReport.TravelDuration = (int)vrpRouteReport.ActualArrivalTime.Subtract(vrpRouteReport.ActualDepartureTime).TotalMinutes;
+                    }                    
                 }
 
                 if (jobEndTime != Convert.ToDateTime("1/1/0001 00:00:00"))
                 {
                     vrpRouteReport.JobEndTime = jobEndTime;
-                    vrpRouteReport.JobDuration = (int)vrpRouteReport.JobEndTime.Subtract(vrpRouteReport.JobStartTime).TotalMinutes;
+
+                    if (vrpRouteReport.JobStartTime != Convert.ToDateTime("1/1/2000 00:00:00") && vrpRouteReport.JobStartTime != Convert.ToDateTime("1/1/0001 00:00:00"))
+                    {
+                        vrpRouteReport.JobDuration = (int)vrpRouteReport.JobEndTime.Subtract(vrpRouteReport.JobStartTime).TotalMinutes;
+                    }                    
                 }
 
                 if (!isUpdateRecord)
