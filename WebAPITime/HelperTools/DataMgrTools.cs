@@ -105,9 +105,11 @@ namespace WebAPITime.HelperTools
                 udtVrpSetting.EndLatitude = dbRdr.ToDouble("end_latitude");
                 udtVrpSetting.EndLongitude = dbRdr.ToDouble("end_longitude");
                 udtVrpSetting.EndAddress = dbRdr.ToString("end_address");              
-                udtVrpSetting.WeightCapacity = dbRdr.ToInt32("weight_capacity");
-                udtVrpSetting.VolumeCapacity = dbRdr.ToInt32("volume_capacity");
-                udtVrpSetting.DistanceCapacity = dbRdr.ToInt32("distance_capacity");
+                udtVrpSetting.WeightCapacity = dbRdr.ToDouble("weight_capacity");
+                udtVrpSetting.VolumeCapacity = dbRdr.ToDouble("volume_capacity");
+                udtVrpSetting.DistanceCapacity = dbRdr.ToDouble("distance_capacity");
+                udtVrpSetting.LoadDuration = dbRdr.ToInt32("load_duration");
+                udtVrpSetting.UnloadDuration = dbRdr.ToInt32("unload_duration");
                 udtVrpSetting.TimeWindowStart = dbRdr.ToDateTime("time_window_start");
                 udtVrpSetting.TimeWindowEnd = dbRdr.ToDateTime("time_window_end");
                 udtVrpSetting.BreakTimeStart = dbRdr.ToDateTime("break_time_start");

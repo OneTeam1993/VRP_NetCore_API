@@ -18,8 +18,8 @@ namespace VrpModel
         public long[,] TimeMatrix;
         public long[,] DistanceMatrix;
         public int[,] TimeWindows;
-        public long[] WeightCapacities;
-        public long[] VolumeCapacities;
+        public double[] WeightCapacities;
+        public double[] VolumeCapacities;
         public double[] arrLocationWeight;
         public double[] arrLocationVolume;
         public int VehicleCount;
@@ -102,7 +102,7 @@ namespace VrpModel
                 vehicleStartLocation.TotalWeight = 0;
                 vehicleStartLocation.TotalVolume = 0;
                 vehicleStartLocation.ServiceDuration = 0;
-                vehicleStartLocation.LoadDuration = 0;
+                vehicleStartLocation.LoadDuration = arrVrpSettings[i].LoadDuration;
                 vehicleStartLocation.UnloadDuration = 0;
                 vehicleStartLocation.WaitingDuration = 0;
                 vehicleStartLocation.TimeWindowStart = arrVrpSettings[i].TimeWindowStart;
@@ -152,7 +152,7 @@ namespace VrpModel
                     vehicleEndLocation.TotalVolume = 0;
                     vehicleEndLocation.ServiceDuration = 0;
                     vehicleEndLocation.LoadDuration = 0;
-                    vehicleEndLocation.UnloadDuration = 0;
+                    vehicleEndLocation.UnloadDuration = arrVrpSettings[i].UnloadDuration;
                     vehicleEndLocation.WaitingDuration = 0;
                     vehicleEndLocation.TimeWindowStart = arrVrpSettings[i].TimeWindowStart;
                     vehicleEndLocation.TimeWindowEnd = arrVrpSettings[i].TimeWindowEnd;
@@ -562,8 +562,8 @@ namespace VrpModel
             List<int> loadDurations = new List<int>();
             List<int> unloadDurations = new List<int>();
             List<int> waitingDurations = new List<int>();
-            List<long> weightCapacities = new List<long>();
-            List<long> volumeCapacities = new List<long>();
+            List<double> weightCapacities = new List<double>();
+            List<double> volumeCapacities = new List<double>();
             List<string> locationCoordinates = new List<string>();           
             TimeMatrix = new long[arrAllLocation.Count, arrAllLocation.Count];
             DistanceMatrix = new long[arrAllLocation.Count, arrAllLocation.Count];

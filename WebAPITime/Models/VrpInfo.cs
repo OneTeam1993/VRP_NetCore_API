@@ -24,8 +24,8 @@ namespace VrpModel
         public string VehicleColor { get; set; }
         public string DriverName { get; set; }
         public Dictionary<int, string> Zones { get; set; }
-        public int WeightCapacity { get; set; }
-        public int VolumeCapacity { get; set; }              
+        public double WeightCapacity { get; set; }
+        public double VolumeCapacity { get; set; }              
         public double TotalWeightLoad { get; set; }
         public double TotalVolumeLoad { get; set; }
         public double TotalDistance { get; set; }

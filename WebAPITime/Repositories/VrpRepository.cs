@@ -179,13 +179,24 @@ namespace WebAPITime.Repositories
                     #endregion
 
                     #region Region: Distance constraint 
+                    long[,] tempDistanceMatrix  = new long[data.arrAllLocation.Count, data.arrAllLocation.Count];
+
+                    for (int i = 0; i < data.DistanceMatrix.GetLength(0); i++)
+                    {
+                        for (int j = 0; j < data.DistanceMatrix.GetLength(1); j++)
+                        {
+                            //n * 100 to solve google OR tools type 'long' issue
+                            tempDistanceMatrix[i, j] = data.DistanceMatrix[i, j] * 100;
+                        }
+                    }
+
                     int transitCallbackIndexDistance = routing.RegisterTransitCallback(
                         (long fromIndex, long toIndex) =>
                         {
-                                // Convert from routing variable Index to distance matrix NodeIndex.
-                                var fromNode = manager.IndexToNode(fromIndex);
+                            // Convert from routing variable Index to distance matrix NodeIndex.
+                            var fromNode = manager.IndexToNode(fromIndex);
                             var toNode = manager.IndexToNode(toIndex);
-                            return data.DistanceMatrix[fromNode, toNode];
+                            return tempDistanceMatrix[fromNode, toNode];
                         }
                     );
 
@@ -194,7 +205,7 @@ namespace WebAPITime.Repositories
                     routing.AddDimension(
                         transitCallbackIndexDistance,
                         0, // allow waiting time
-                        data.MaxDistance * 5, // vehicle maximum capacities
+                        data.MaxDistance * 100 * 5, // vehicle maximum capacities. n * 100 to solve google OR tools type 'long' issue
                         true,  // start cumul to zero
                         "Distance"
                     );
@@ -203,7 +214,8 @@ namespace WebAPITime.Repositories
                     // Each Vehicles' distance limit/capacity
                     for (int i = 0; i < data.VehicleCount; ++i)
                     {
-                        distanceDimension.SetBreakDistanceDurationOfVehicle(data.arrVrpSettings[i].DistanceCapacity * 1000, 1440, i);
+                        //Distance capacity * 100 to solve google OR tools type 'long' issue, * 1000 to convert to meters
+                        distanceDimension.SetBreakDistanceDurationOfVehicle(Convert.ToInt64(data.arrVrpSettings[i].DistanceCapacity * 100 * 1000), 1440, i);
                     }
                     #endregion
 
@@ -226,21 +238,36 @@ namespace WebAPITime.Repositories
                     }
                     #endregion
 
-                    #region Region: Weight Capacity constraint
+                    #region Region: Weight Capacity constraint                   
                     if (data.VehicleCount > 0 && data.arrVrpSettings[0].WeightCapacity > 0)
                     {
+                        long[] tempArrLocationWeight = new long[data.arrLocationWeight.Length];
+                        for (int i = 0; i < data.arrLocationWeight.Length; i++)
+                        {
+                            //n * 100 to solve google OR tools type 'long' issue
+                            tempArrLocationWeight[i] = Convert.ToInt64(data.arrLocationWeight[i] * 100);
+                        }
+                       
                         int weightCallbackIndex = routing.RegisterUnaryTransitCallback(
                             (long fromIndex) =>
                             {
-                                    // Convert from routing variable Index to demand NodeIndex.
-                                    var fromNode = manager.IndexToNode(fromIndex);
-                                return Convert.ToInt64(data.arrLocationWeight[fromNode]);
+                                // Convert from routing variable Index to demand NodeIndex.
+                                var fromNode = manager.IndexToNode(fromIndex);
+                                return tempArrLocationWeight[fromNode];
                             }
                         );
+
+                        long[] tempWeightCapacities = new long[data.WeightCapacities.Length];
+                        for (int i = 0; i < data.WeightCapacities.Length; i++)
+                        {
+                            //n * 100 to solve google OR tools type 'long' issue
+                            tempWeightCapacities[i] = Convert.ToInt64(data.WeightCapacities[i] * 100);
+                        }
+
                         routing.AddDimensionWithVehicleCapacity(
                             weightCallbackIndex,
                             0, // null capacity slack
-                            data.WeightCapacities, // vehicle maximum capacities
+                            tempWeightCapacities, // vehicle maximum capacities
                             true, // start cumul to zero
                             "WeightCapacity"
                         );
@@ -250,18 +277,34 @@ namespace WebAPITime.Repositories
                     #region Region: Volume Capacity constraint 
                     if (data.VehicleCount > 0 && data.arrVrpSettings[0].VolumeCapacity > 0)
                     {
+                        long[] tempArrLocationVolume = new long[data.arrLocationVolume.Length];
+                        for (int i = 0; i < data.arrLocationVolume.Length; i++)
+                        {
+                            //n * 100 to solve google OR tools type 'long' issue
+                            tempArrLocationVolume[i] = Convert.ToInt64(data.arrLocationVolume[i] * 100);
+                        }
+                        
+
                         int volumeCallbackIndex = routing.RegisterUnaryTransitCallback(
                             (long fromIndex) =>
                             {
-                                    // Convert from routing variable Index to demand NodeIndex.
-                                    var fromNode = manager.IndexToNode(fromIndex);
-                                return Convert.ToInt64(data.arrLocationVolume[fromNode]);
+                                // Convert from routing variable Index to demand NodeIndex.
+                                var fromNode = manager.IndexToNode(fromIndex);
+                                return tempArrLocationVolume[fromNode];
                             }
                         );
+
+                        long[] tempVolumeCapacities = new long[data.VolumeCapacities.Length];
+                        for (int i = 0; i < data.VolumeCapacities.Length; i++)
+                        {
+                            //n * 100 to solve google OR tools type 'long' issue
+                            tempVolumeCapacities[i] = Convert.ToInt64(data.VolumeCapacities[i] * 100);
+                        }
+
                         routing.AddDimensionWithVehicleCapacity(
                             volumeCallbackIndex,
                             0, // null capacity slack
-                            data.VolumeCapacities, // vehicle maximum capacities
+                            tempVolumeCapacities, // vehicle maximum capacities
                             true, // start cumul to zero
                             "VolumeCapacity"
                         );
@@ -331,7 +374,7 @@ namespace WebAPITime.Repositories
                         }
 
                         routing.AddDisjunction(
-                            new long[] { manager.NodeToIndex(i) }, priorityPenalty);
+                            new long[] { manager.NodeToIndex(i) }, priorityPenalty * 100); //n * 100 to solve google OR tools type 'long' issue
                     }
                     #endregion
 

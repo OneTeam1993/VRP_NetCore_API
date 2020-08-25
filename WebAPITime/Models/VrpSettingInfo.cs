@@ -18,9 +18,11 @@ namespace WebAPITime.Models
         public double EndLatitude { get; set; }
         public double EndLongitude { get; set; }
         public string EndAddress { get; set; }
-        public int WeightCapacity { get; set; }
-        public int VolumeCapacity { get; set; }
-        public int DistanceCapacity { get; set; }
+        public double WeightCapacity { get; set; }
+        public double VolumeCapacity { get; set; }
+        public double DistanceCapacity { get; set; }
+        public int LoadDuration { get; set; }
+        public int UnloadDuration { get; set; }
         public DateTime TimeWindowStart { get; set; }
         public DateTime TimeWindowEnd { get; set; }
         public DateTime BreakTimeStart { get; set; }
