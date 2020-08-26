@@ -62,10 +62,14 @@ namespace WebAPITime.Repositories
 
                     vrpRouteReport = new VrpRouteReport();
                     vrpRouteReport.VrpRouteID = routeID;
+                    vrpRouteReport.ToAddress = routeInfo.PickupDeliveryInfo.Address;
+                    vrpRouteReport.DriverID = routeInfo.DriverID;
+                    vrpRouteReport.CompanyID = routeInfo.CompanyID;
 
                     if (previousRouteInfo != null)
                     {
                         vrpRouteReport.FromVrpRouteID = previousRouteInfo.RouteID;
+                        vrpRouteReport.FromAddress = previousRouteInfo.PickupDeliveryInfo.Address;
                         vrpRouteReport.EstDepartureTime = previousRouteInfo.DepartureTime;
                     }
                     else
@@ -199,11 +203,16 @@ namespace WebAPITime.Repositories
 
             vrpRouteReport.DepartureTimeStatus = vrpRouteReport.DepartureTimeStatus ?? "";
             vrpRouteReport.ArrivalTimeStatus = vrpRouteReport.ArrivalTimeStatus ?? "";
+            vrpRouteReport.FromAddress = vrpRouteReport.FromAddress ?? "";
+            vrpRouteReport.ToAddress = vrpRouteReport.ToAddress ?? "";
 
-            string query = String.Format("INSERT INTO vrp_route_reports (vrp_routes_id, from_vrp_routes_id, est_departure_time, actual_departure_time, status_departure_time, est_arrival_time, actual_arrival_time, status_arrival_time, travel_duration, job_start_time, job_end_time, job_duration, est_job_duration) " +
-                "VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12})",
+            string query = String.Format("INSERT INTO vrp_route_reports (vrp_routes_id, from_vrp_routes_id, from_address, to_address, driver_id, est_departure_time, actual_departure_time, status_departure_time, est_arrival_time, actual_arrival_time, status_arrival_time, travel_duration, job_start_time, job_end_time, job_duration, est_job_duration, company_id) " +
+                "VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}, {14}, {15}, {16})",
                 vrpRouteReport.VrpRouteID == 0 ? "NULL" : vrpRouteReport.VrpRouteID.ToString(),
                 vrpRouteReport.FromVrpRouteID == 0 ? "NULL" : vrpRouteReport.FromVrpRouteID.ToString(),
+                vrpRouteReport.FromAddress == "" ? "NULL" : String.Format("'{0}'", vrpRouteReport.FromAddress),
+                vrpRouteReport.ToAddress == "" ? "NULL" : String.Format("'{0}'", vrpRouteReport.ToAddress),
+                vrpRouteReport.DriverID == 0 ? "NULL" : vrpRouteReport.DriverID.ToString(),
                 vrpRouteReport.EstDepartureTime == Convert.ToDateTime("1/1/0001 00:00:00") ? "NULL" : String.Format("'{0}'", vrpRouteReport.EstDepartureTime.ToString("yyyy-MM-dd HH:mm:ss")),
                 vrpRouteReport.ActualDepartureTime == Convert.ToDateTime("1/1/0001 00:00:00") ? "NULL" : String.Format("'{0}'", vrpRouteReport.ActualDepartureTime.ToString("yyyy-MM-dd HH:mm:ss")),
                 vrpRouteReport.DepartureTimeStatus == "" ? "NULL" : String.Format("'{0}'", vrpRouteReport.DepartureTimeStatus),
@@ -214,7 +223,8 @@ namespace WebAPITime.Repositories
                 vrpRouteReport.JobStartTime == Convert.ToDateTime("1/1/0001 00:00:00") ? "NULL" : String.Format("'{0}'", vrpRouteReport.JobStartTime.ToString("yyyy-MM-dd HH:mm:ss")),
                 vrpRouteReport.JobEndTime == Convert.ToDateTime("1/1/0001 00:00:00") ? "NULL" : String.Format("'{0}'", vrpRouteReport.JobEndTime.ToString("yyyy-MM-dd HH:mm:ss")),
                 vrpRouteReport.JobDuration == 0 ? "NULL" : vrpRouteReport.JobDuration.ToString(),
-                vrpRouteReport.EstJobDuration
+                vrpRouteReport.EstJobDuration,
+                vrpRouteReport.CompanyID == 0 ? "NULL" : vrpRouteReport.CompanyID.ToString()
                 );
 
             try
@@ -252,13 +262,18 @@ namespace WebAPITime.Repositories
 
             vrpRouteReport.DepartureTimeStatus = vrpRouteReport.DepartureTimeStatus ?? "";
             vrpRouteReport.ArrivalTimeStatus = vrpRouteReport.ArrivalTimeStatus ?? "";
+            vrpRouteReport.FromAddress = vrpRouteReport.FromAddress ?? "";
+            vrpRouteReport.ToAddress = vrpRouteReport.ToAddress ?? "";
 
             string query = String.Format("UPDATE vrp_route_reports " +
-                "SET from_vrp_routes_id = {0}, est_departure_time = {1}, actual_departure_time = {2}, status_departure_time = {3}, " +
-                "est_arrival_time = {4}, actual_arrival_time = {5}, status_arrival_time = {6}, travel_duration = {7}, job_start_time = {8}, " +
-                "job_end_time = {9}, job_duration = {10}, est_job_duration = {11} " +
-                "WHERE vrp_routes_id = {12}",                       
+                "SET from_vrp_routes_id = {0}, from_address = {1}, to_address = {2}, driver_id = {3}, est_departure_time = {4}, actual_departure_time = {5}, status_departure_time = {6}, " +
+                "est_arrival_time = {7}, actual_arrival_time = {8}, status_arrival_time = {9}, travel_duration = {10}, job_start_time = {11}, " +
+                "job_end_time = {12}, job_duration = {13}, est_job_duration = {14}, company_id = {15} " +
+                "WHERE vrp_routes_id = {16}",                       
                 vrpRouteReport.FromVrpRouteID == 0 ? "NULL" : vrpRouteReport.FromVrpRouteID.ToString(),
+                vrpRouteReport.FromAddress == "" ? "NULL" : String.Format("'{0}'", vrpRouteReport.FromAddress),
+                vrpRouteReport.ToAddress == "" ? "NULL" : String.Format("'{0}'", vrpRouteReport.ToAddress),
+                vrpRouteReport.DriverID == 0 ? "NULL" : vrpRouteReport.DriverID.ToString(),
                 vrpRouteReport.EstDepartureTime == Convert.ToDateTime("1/1/2000 00:00:00") ? "NULL" : String.Format("'{0}'", vrpRouteReport.EstDepartureTime.ToString("yyyy-MM-dd HH:mm:ss")),
                 vrpRouteReport.ActualDepartureTime == Convert.ToDateTime("1/1/2000 00:00:00") ? "NULL" : String.Format("'{0}'", vrpRouteReport.ActualDepartureTime.ToString("yyyy-MM-dd HH:mm:ss")),
                 vrpRouteReport.DepartureTimeStatus == "" ? "NULL" : String.Format("'{0}'", vrpRouteReport.DepartureTimeStatus),
@@ -270,6 +285,7 @@ namespace WebAPITime.Repositories
                 vrpRouteReport.JobEndTime == Convert.ToDateTime("1/1/2000 00:00:00") ? "NULL" : String.Format("'{0}'", vrpRouteReport.JobEndTime.ToString("yyyy-MM-dd HH:mm:ss")),
                 vrpRouteReport.JobDuration == 0 ? "NULL" : vrpRouteReport.JobDuration.ToString(),
                 vrpRouteReport.EstJobDuration,
+                vrpRouteReport.CompanyID == 0 ? "NULL" : vrpRouteReport.CompanyID.ToString(),
                 vrpRouteReport.VrpRouteID == 0 ? "NULL" : vrpRouteReport.VrpRouteID.ToString()
                 );
 

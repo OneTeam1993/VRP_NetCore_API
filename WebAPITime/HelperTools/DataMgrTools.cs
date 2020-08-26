@@ -244,6 +244,7 @@ namespace WebAPITime.HelperTools
                 udtRoute.Flag = dbRdr.ToInt32("flag");
                 udtRoute.Timestamp = dbRdr.ToDateTime("timestamp");
                 udtRoute.RxTime = dbRdr.ToDateTime("rx_time");
+                udtRoute.CompanyID = dbRdr.ToInt32("company_id");
             }
             catch (Exception ex)
             {
@@ -458,6 +459,9 @@ namespace WebAPITime.HelperTools
             {
                 udtVrpRouteReport.VrpRouteID = dbRdr.ToInt64("vrp_routes_id");
                 udtVrpRouteReport.FromVrpRouteID = dbRdr.ToInt64("from_vrp_routes_id");
+                udtVrpRouteReport.FromAddress = dbRdr.ToString("from_address");
+                udtVrpRouteReport.ToAddress = dbRdr.ToString("to_address");
+                udtVrpRouteReport.DriverID = dbRdr.ToInt64("driver_id");
                 udtVrpRouteReport.EstDepartureTime = dbRdr.ToDateTime("est_departure_time");
                 udtVrpRouteReport.ActualDepartureTime = dbRdr.ToDateTime("actual_departure_time");
                 udtVrpRouteReport.DepartureTimeStatus = dbRdr.ToString("status_departure_time");
@@ -469,6 +473,7 @@ namespace WebAPITime.HelperTools
                 udtVrpRouteReport.JobEndTime = dbRdr.ToDateTime("job_end_time");
                 udtVrpRouteReport.JobDuration = dbRdr.ToInt32("job_duration");
                 udtVrpRouteReport.EstJobDuration = dbRdr.ToInt32("est_job_duration");
+                udtVrpRouteReport.CompanyID = dbRdr.ToInt32("company_id");
 
             }
             catch (Exception ex)

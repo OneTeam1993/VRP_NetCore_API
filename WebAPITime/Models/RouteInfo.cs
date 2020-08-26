@@ -28,6 +28,7 @@ namespace WebAPITime.Models
         public int Flag { get; set; }
         public DateTime Timestamp { get; set; }
         public DateTime RxTime { get; set; }
+        public int CompanyID { get; set; }
     }
 
     public class Customer

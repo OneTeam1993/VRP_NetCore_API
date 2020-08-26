@@ -526,7 +526,8 @@ namespace WebAPITime.Repositories
                                     foreach (long id in arrValue)
                                     {
                                         RowsUpdate.Add(string.Format("UPDATE {0} SET driver_id = {1}, rx_time = '{2}' WHERE {3} = {4}", tableName, arrVrpSettings[i].DriverID, currentDateTime, colID, id));
-                                        RowsUpdate.Add(string.Format("UPDATE main_inventory_history SET asset_id = {1}, driver_id = {2}, rx_time = '{3}' WHERE {4} = {5}", tableName, arrVrpSettings[i].AssetID, arrVrpSettings[i].DriverID, currentDateTime, colID, id));
+                                        RowsUpdate.Add(string.Format("UPDATE main_inventory_history SET asset_id = {0}, driver_id = {1}, rx_time = '{2}' WHERE {3} = {4}", arrVrpSettings[i].AssetID, arrVrpSettings[i].DriverID, currentDateTime, colID, id));
+                                        RowsUpdate.Add(string.Format("UPDATE sub_inventory_history SET asset_id = {0}, driver_id = {1}, rx_time = '{2}' WHERE {3} = {4}", arrVrpSettings[i].AssetID, arrVrpSettings[i].DriverID, currentDateTime, colID, id));
                                     }
 
                                 }
@@ -536,12 +537,14 @@ namespace WebAPITime.Repositories
                                     {
                                         RowsUpdate.Add(string.Format("UPDATE vrp_pickup SET driver_id = {0}, rx_time = '{1}' WHERE pickup_id = {2}", arrVrpSettings[i].DriverID, currentDateTime, pickupID));
                                         RowsUpdate.Add(string.Format("UPDATE main_inventory_history SET asset_id = {0}, driver_id = {1}, rx_time = '{2}' WHERE pickup_id = {3}", arrVrpSettings[i].AssetID, arrVrpSettings[i].DriverID, currentDateTime, pickupID));
+                                        RowsUpdate.Add(string.Format("UPDATE sub_inventory_history SET asset_id = {0}, driver_id = {1}, rx_time = '{2}' WHERE pickup_id = {3}", arrVrpSettings[i].AssetID, arrVrpSettings[i].DriverID, currentDateTime, pickupID));
                                     }
 
                                     foreach (long deliveryID in arrAllLocation[node.NodeID].DeliveryIDs)
                                     {
                                         RowsUpdate.Add(string.Format("UPDATE vrp_delivery SET driver_id = {0}, rx_time = '{1}' WHERE delivery_id = {2}", arrVrpSettings[i].DriverID, currentDateTime, deliveryID));
                                         RowsUpdate.Add(string.Format("UPDATE main_inventory_history SET asset_id = {0}, driver_id = {1}, rx_time = '{2}' WHERE delivery_id = {3}", arrVrpSettings[i].AssetID, arrVrpSettings[i].DriverID, currentDateTime, deliveryID));
+                                        RowsUpdate.Add(string.Format("UPDATE sub_inventory_history SET asset_id = {0}, driver_id = {1}, rx_time = '{2}' WHERE delivery_id = {3}", arrVrpSettings[i].AssetID, arrVrpSettings[i].DriverID, currentDateTime, deliveryID));
                                     }
                                 }
                             }
