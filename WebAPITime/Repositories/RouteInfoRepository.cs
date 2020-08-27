@@ -37,11 +37,13 @@ namespace WebAPITime.Repositories
             Dictionary<long, CustomerInfo> pickupIdToCustomerMap = new Dictionary<long, CustomerInfo>();
             Dictionary<long, CustomerInfo> deliveryIdToCustomerMap = new Dictionary<long, CustomerInfo>();
             string query = "";
+            string whereClause = "";
+            string orderBy = "";
             string driverFilter = "";
 
             if (driverID != null)
             {
-                driverFilter = " AND driver_id IN (" + driverID + ")";
+                driverFilter = " AND r.driver_id IN (" + driverID + ")";
             }
 
             if (!(timeWindowStart == Convert.ToDateTime("1/1/0001 00:00:00") || timeWindowEnd == Convert.ToDateTime("1/1/0001 00:00:00")))
@@ -51,28 +53,60 @@ namespace WebAPITime.Repositories
 
                 if (!(timeWindowStart == Convert.ToDateTime("1/1/0001 00:00:00") || timeWindowEnd == Convert.ToDateTime("1/1/0001 00:00:00")))
                 {
-                    dateFilter = " AND DATE(arrival_time) BETWEEN '" + timeWindowStart.ToString("yyyy-MM-dd") + "' AND '" + timeWindowEnd.ToString("yyyy-MM-dd") + "'";
+                    dateFilter = " AND DATE(r.arrival_time) BETWEEN '" + timeWindowStart.ToString("yyyy-MM-dd") + "' AND '" + timeWindowEnd.ToString("yyyy-MM-dd") + "'";
                 }
 
                 if(companyID != null)
                 {
-                    companyFilter = " AND company_id = " + companyID;
+                    companyFilter = " AND s.company_id = " + companyID;
                 }
             
-                query = string.Format("SELECT * FROM view_vrp_route_info WHERE flag IN (" + flag + ")" + dateFilter + driverFilter + companyFilter + " ORDER BY DATE(arrival_time) ASC, route_no ASC, driver_id ASC, sequence ASC");
+                //query = string.Format("SELECT * FROM view_vrp_route_info WHERE flag IN (" + flag + ")" + dateFilter + driverFilter + companyFilter + " ORDER BY DATE(arrival_time) ASC, route_no ASC, driver_id ASC, sequence ASC");
+                whereClause = "WHERE r.flag IN (" + flag + ")" + dateFilter + driverFilter + companyFilter;
+                orderBy = "ORDER BY DATE(r.arrival_time) ASC, r.route_no ASC, r.driver_id ASC, r.sequence ASC";
             }
             else
             {
-                query = string.Format("SELECT * FROM view_vrp_route_info WHERE DATE(arrival_time) = CURDATE()" + driverFilter + " AND flag IN (" + flag + ") ORDER BY route_no ASC, sequence ASC");
+                //query = string.Format("SELECT * FROM view_vrp_route_info WHERE DATE(arrival_time) = CURDATE()" + driverFilter + " AND flag IN (" + flag + ") ORDER BY route_no ASC, sequence ASC");
+                whereClause = "WHERE DATE(r.arrival_time) = CURDATE()" + driverFilter + " AND r.flag IN (" + flag + ")";
+                orderBy = "ORDER BY r.route_no ASC, r.sequence ASC";
             }
-            
+
+            //try
+            //{
+            //    using (MySqlConnection conn = new MySqlConnection(mConnStr))
+            //    {
+            //        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+            //        {
+            //            conn.Open();
+            //            cmd.Prepare();
+
+            //            using (MySqlDataReader reader = cmd.ExecuteReader())
+            //            {
+            //                if ((reader != null) && (reader.HasRows))
+            //                {
+            //                    while (reader.Read())
+            //                    {
+            //                        currRoute = DataMgrTools.BuildRouteInfo(reader);
+            //                        arrRoutes.Add(currRoute);
+            //                    }
+            //                }
+            //            }
+
+            //            conn.Close();
+            //        }
+            //    }
+            //}
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(mConnStr))
                 {
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    using (MySqlCommand cmd = new MySqlCommand("sp_view_route_info", conn))
                     {
                         conn.Open();
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new MySqlParameter("@whereClause", whereClause));
+                        cmd.Parameters.Add(new MySqlParameter("@orderBy", orderBy));
                         cmd.Prepare();
 
                         using (MySqlDataReader reader = cmd.ExecuteReader())
@@ -255,18 +289,48 @@ namespace WebAPITime.Repositories
         {
             List<RouteInfo> arrRoutes = new List<RouteInfo>();
             RouteInfo currRoute = new RouteInfo();
-            string query = string.Format("SELECT * FROM view_vrp_route_info WHERE route_no = @routeNo AND driver_id = @driverID ORDER BY sequence ASC");
+            //string query = string.Format("SELECT * FROM view_vrp_route_info WHERE route_no = @routeNo AND driver_id = @driverID ORDER BY sequence ASC");
+            string whereClause = String.Format("WHERE r.route_no = '{0}' AND r.driver_id = {1}", routeNo, driverID);
+            string orderBy = "ORDER BY r.sequence ASC";
 
+            //try
+            //{
+            //    using (MySqlConnection conn = new MySqlConnection(mConnStr))
+            //    {
+            //        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+            //        {
+            //            conn.Open();
+            //            cmd.Prepare();
+            //            cmd.Parameters.AddWithValue("@routeNo", routeNo);
+            //            cmd.Parameters.AddWithValue("@driverID", driverID);
+
+            //            using (MySqlDataReader reader = cmd.ExecuteReader())
+            //            {
+            //                if ((reader != null) && (reader.HasRows))
+            //                {
+            //                    while (reader.Read())
+            //                    {
+            //                        currRoute = DataMgrTools.BuildRouteInfo(reader);
+            //                        arrRoutes.Add(currRoute);
+            //                    }
+            //                }
+            //            }
+
+            //            conn.Close();
+            //        }
+            //    }
+            //}
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(mConnStr))
                 {
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    using (MySqlCommand cmd = new MySqlCommand("sp_view_route_info", conn))
                     {
                         conn.Open();
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new MySqlParameter("@whereClause", whereClause));
+                        cmd.Parameters.Add(new MySqlParameter("@orderBy", orderBy));
                         cmd.Prepare();
-                        cmd.Parameters.AddWithValue("@routeNo", routeNo);
-                        cmd.Parameters.AddWithValue("@driverID", driverID);
 
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
@@ -296,17 +360,46 @@ namespace WebAPITime.Repositories
         {
             List<RouteInfo> arrRoutes = new List<RouteInfo>();
             RouteInfo currRoute = new RouteInfo();
-            string query = string.Format("SELECT * FROM view_vrp_route_info WHERE route_no = @routeNo");
-          
+            //string query = string.Format("SELECT * FROM view_vrp_route_info WHERE route_no = @routeNo");
+            string whereClause = String.Format("WHERE r.route_no = '{0}'", routeNo);
+
+            //try
+            //{
+            //    using (MySqlConnection conn = new MySqlConnection(mConnStr))
+            //    {
+            //        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+            //        {
+            //            conn.Open();
+            //            cmd.Prepare();
+            //            cmd.Parameters.AddWithValue("@routeNo", routeNo);
+
+            //            using (MySqlDataReader reader = cmd.ExecuteReader())
+            //            {
+            //                if ((reader != null) && (reader.HasRows))
+            //                {
+            //                    while (reader.Read())
+            //                    {
+            //                        currRoute = DataMgrTools.BuildRouteInfo(reader);
+            //                        arrRoutes.Add(currRoute);
+            //                    }
+            //                }
+            //            }
+
+            //            conn.Close();
+            //        }
+            //    }
+            //}
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(mConnStr))
                 {
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    using (MySqlCommand cmd = new MySqlCommand("sp_view_route_info", conn))
                     {
                         conn.Open();
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new MySqlParameter("@whereClause", whereClause));
+                        cmd.Parameters.Add(new MySqlParameter("@orderBy", ""));
                         cmd.Prepare();
-                        cmd.Parameters.AddWithValue("@routeNo", routeNo);
 
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
@@ -350,15 +443,45 @@ namespace WebAPITime.Repositories
 
             if(formattedRouteNo.Length > 0)
             {
-                string query = string.Format("SELECT * FROM view_vrp_route_info WHERE route_no IN (" + formattedRouteNo + ") AND flag IN (" + flag + ") ORDER BY DATE(arrival_time) ASC, route_no ASC, driver_id ASC, sequence ASC");
+                //string query = string.Format("SELECT * FROM view_vrp_route_info WHERE route_no IN (" + formattedRouteNo + ") AND flag IN (" + flag + ") ORDER BY DATE(arrival_time) ASC, route_no ASC, driver_id ASC, sequence ASC");
+                string whereClause = "WHERE r.route_no IN (" + formattedRouteNo + ") AND r.flag IN (" + flag + ")";
+                string orderBy = "ORDER BY DATE(r.arrival_time) ASC, r.route_no ASC, r.driver_id ASC, r.sequence ASC";
 
+                //try
+                //{
+                //    using (MySqlConnection conn = new MySqlConnection(mConnStr))
+                //    {
+                //        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                //        {
+                //            conn.Open();
+                //            cmd.Prepare();
+
+                //            using (MySqlDataReader reader = cmd.ExecuteReader())
+                //            {
+                //                if ((reader != null) && (reader.HasRows))
+                //                {
+                //                    while (reader.Read())
+                //                    {
+                //                        currRoute = DataMgrTools.BuildRouteInfo(reader);
+                //                        arrRoutes.Add(currRoute);
+                //                    }
+                //                }
+                //            }
+
+                //            conn.Close();
+                //        }
+                //    }
+                //}
                 try
                 {
                     using (MySqlConnection conn = new MySqlConnection(mConnStr))
                     {
-                        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                        using (MySqlCommand cmd = new MySqlCommand("sp_view_route_info", conn))
                         {
                             conn.Open();
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.Add(new MySqlParameter("@whereClause", whereClause));
+                            cmd.Parameters.Add(new MySqlParameter("@orderBy", orderBy));
                             cmd.Prepare();
 
                             using (MySqlDataReader reader = cmd.ExecuteReader())
@@ -389,19 +512,44 @@ namespace WebAPITime.Repositories
         public RouteInfo Get(long id)
         {
             RouteInfo currRoute = new RouteInfo();
-            string query = string.Format("SELECT * FROM view_vrp_route_info WHERE vrp_routes_id = @RouteID");
+            //string query = string.Format("SELECT * FROM view_vrp_route_info WHERE vrp_routes_id = @RouteID");
+            string whereClause = String.Format("WHERE r.vrp_routes_id = '{0}'", id);
 
             using (MySqlConnection conn = new MySqlConnection(mConnStr))
             {
+                //try
+                //{
+                //    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                //    {
+                //        conn.Open();
+                //        cmd.Prepare();
+                //        cmd.Parameters.AddWithValue("@RouteID", id);
+                //        //cmd.Parameters.AddWithValue("@flag", flag);
+
+                //        using (MySqlDataReader reader = cmd.ExecuteReader())
+                //        {
+                //            if ((reader != null) && (reader.HasRows))
+                //            {
+                //                while (reader.Read())
+                //                {
+                //                    currRoute = DataMgrTools.BuildRouteInfo(reader);
+                //                }
+                //            }
+                //        }
+
+                //        conn.Close();
+                //    }
+                //}
                 try
                 {
-                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    using (MySqlCommand cmd = new MySqlCommand("sp_view_route_info", conn))
                     {
                         conn.Open();
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add(new MySqlParameter("@whereClause", whereClause));
+                        cmd.Parameters.Add(new MySqlParameter("@orderBy", ""));
                         cmd.Prepare();
-                        cmd.Parameters.AddWithValue("@RouteID", id);
-                        //cmd.Parameters.AddWithValue("@flag", flag);
-
+                        
                         using (MySqlDataReader reader = cmd.ExecuteReader())
                         {
                             if ((reader != null) && (reader.HasRows))
