@@ -411,6 +411,7 @@ namespace WebAPITime.HelperTools
             {               
                 udtVrpLocationRequest.CompanyID = dbRdr.ToInt32("company_id");
                 udtVrpLocationRequest.RequestCount = dbRdr.ToInt32("request_count");
+                udtVrpLocationRequest.DailyCreditLimit = dbRdr.ToInt32("daily_credit_limit");
                 udtVrpLocationRequest.CreditLimit = dbRdr.ToInt32("credit_limit");
                 udtVrpLocationRequest.Year = dbRdr.ToInt32("year");
 

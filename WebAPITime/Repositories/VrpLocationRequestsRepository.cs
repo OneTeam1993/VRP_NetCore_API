@@ -73,7 +73,7 @@ namespace WebAPITime.Repositories
                     datetimeStart = DateTime.Parse(String.Format("{0}-01-01 00:00:00", strDateStart));
                     datetimeEnd = DateTime.Parse(String.Format("{0}-12-31 23:59:59", strDateEnd));
 
-                    select = "SELECT c.company_id, YEAR(r.date_request) 'year', SUM(r.request_count) 'request_count', c.credit_limit  ";
+                    select = "SELECT c.company_id, YEAR(r.date_request) 'year', SUM(r.request_count) 'request_count', c.daily_credit_limit, c.credit_limit  ";
 
                     groupBy = "GROUP BY c.company_id, YEAR(r.date_request) ";
                     orderBy = "ORDER BY c.company_id ASC, YEAR(r.date_request) ASC";
@@ -87,7 +87,7 @@ namespace WebAPITime.Repositories
                     datetimeStart = DateTime.Parse(String.Format("{0}-{1}-01 00:00:00", tempDatetimeStart.Year, tempDatetimeStart.Month));
                     datetimeEnd = DateTime.Parse(String.Format("{0}-{1}-{2} 23:59:59", tempDatetimeEnd.Year, tempDatetimeEnd.Month, DateTime.DaysInMonth(tempDatetimeEnd.Year, tempDatetimeEnd.Month)));
 
-                    select = "SELECT c.company_id, YEAR(r.date_request) 'year', MONTH(r.date_request) 'month', SUM(r.request_count) 'request_count', c.credit_limit ";
+                    select = "SELECT c.company_id, YEAR(r.date_request) 'year', MONTH(r.date_request) 'month', SUM(r.request_count) 'request_count', c.daily_credit_limit, c.credit_limit ";
                     groupBy = "GROUP BY c.company_id, YEAR(r.date_request), MONTH(r.date_request) ";
                     orderBy = "ORDER BY c.company_id ASC, YEAR(r.date_request) ASC, MONTH(r.date_request) ASC";
 
@@ -100,7 +100,7 @@ namespace WebAPITime.Repositories
                     datetimeStart = DateTime.Parse(String.Format("{0}-{1}-{2} 00:00:00", tempDatetimeStart.Year, tempDatetimeStart.Month, tempDatetimeStart.Day));
                     datetimeEnd = DateTime.Parse(String.Format("{0}-{1}-{2} 23:59:59", tempDatetimeEnd.Year, tempDatetimeEnd.Month, tempDatetimeEnd.Day));
 
-                    select = "SELECT c.company_id, YEAR(r.date_request) 'year', MONTH(r.date_request) 'month', DAY(r.date_request) 'day', SUM(r.request_count) 'request_count', c.credit_limit ";
+                    select = "SELECT c.company_id, YEAR(r.date_request) 'year', MONTH(r.date_request) 'month', DAY(r.date_request) 'day', SUM(r.request_count) 'request_count', c.daily_credit_limit, c.credit_limit ";
                     groupBy = "GROUP BY c.company_id, YEAR(r.date_request), MONTH(r.date_request), DAY(r.date_request) ";
                     orderBy = "ORDER BY c.company_id ASC, YEAR(r.date_request) ASC, MONTH(r.date_request) ASC, DAY(r.date_request) ASC";
 
@@ -178,10 +178,19 @@ namespace WebAPITime.Repositories
                                                 DateTime tempDatetime = DateTime.Parse(String.Format("{0}-{1}-{2}", currVrpLocationRequest.Year, currVrpLocationRequest.Month, currVrpLocationRequest.Day));
                                                 currVrpLocationRequest.Date = tempDatetime.ToString("yyyy-MMM-dd");
 
-                                                if (currVrpLocationRequest.CreditLimit != 0)
+                                                //if (currVrpLocationRequest.CreditLimit != 0)
+                                                //{
+                                                //    int daysInMonth = DateTime.DaysInMonth(currVrpLocationRequest.Year, currVrpLocationRequest.Month);
+                                                //    currVrpLocationRequest.Usage = Math.Round((((double)currVrpLocationRequest.RequestCount / ((double)currVrpLocationRequest.CreditLimit / daysInMonth)) * 100), 2).ToString() + " %";
+                                                //}
+                                                //else
+                                                //{
+                                                //    currVrpLocationRequest.Usage = "0 %";
+                                                //}
+
+                                                if (currVrpLocationRequest.DailyCreditLimit != 0)
                                                 {
-                                                    int daysInMonth = DateTime.DaysInMonth(currVrpLocationRequest.Year, currVrpLocationRequest.Month);
-                                                    currVrpLocationRequest.Usage = Math.Round((((double)currVrpLocationRequest.RequestCount / ((double)currVrpLocationRequest.CreditLimit / daysInMonth)) * 100), 2).ToString() + " %";
+                                                    currVrpLocationRequest.Usage = Math.Round((((double)currVrpLocationRequest.RequestCount / (double)currVrpLocationRequest.DailyCreditLimit) * 100), 2).ToString() + " %";
                                                 }
                                                 else
                                                 {
