@@ -411,7 +411,7 @@ namespace WebAPITime.HelperTools
             {               
                 udtVrpLocationRequest.CompanyID = dbRdr.ToInt32("company_id");
                 udtVrpLocationRequest.RequestCount = dbRdr.ToInt32("request_count");
-                udtVrpLocationRequest.DailyCreditLimit = dbRdr.ToInt32("daily_credit_limit");
+                //udtVrpLocationRequest.DailyCreditLimit = dbRdr.ToInt32("daily_credit_limit");
                 udtVrpLocationRequest.CreditLimit = dbRdr.ToInt32("credit_limit");
                 udtVrpLocationRequest.Year = dbRdr.ToInt32("year");
 
@@ -524,6 +524,42 @@ namespace WebAPITime.HelperTools
                 Logger.LogEvent(mProjName, "DataMgrTools BuildDriverSchedule(): " + ex.Message, System.Diagnostics.EventLogEntryType.Error);
             }
             return udtDriverSchedule;
+        }
+
+        public static VrpCreditLimitHistory BuildVrpCreditLimitHistory(MySqlDataReader dbRdr)
+        {
+            VrpCreditLimitHistory udtVrpCreditLimitHistory = new VrpCreditLimitHistory();
+            try
+            {
+                udtVrpCreditLimitHistory.CompanyID = dbRdr.ToInt32("company_id");
+                udtVrpCreditLimitHistory.Timestamp = dbRdr.ToDateTime("timestamp");
+                udtVrpCreditLimitHistory.CreditLimit = dbRdr.ToInt32("credit_limit");
+
+            }
+            catch (Exception ex)
+            {
+                Logger.LogEvent(mProjName, "DataMgrTools BuildVrpCreditLimitHistory(): " + ex.Message, System.Diagnostics.EventLogEntryType.Error);
+            }
+            return udtVrpCreditLimitHistory;
+        }
+
+        public static VrpBaseCreditLimitHistory BuildVrpBaseCreditLimitHistory(MySqlDataReader dbRdr)
+        {
+            VrpBaseCreditLimitHistory udtVrpBaseCreditLimitHistory = new VrpBaseCreditLimitHistory();
+            try
+            {
+                udtVrpBaseCreditLimitHistory.CompanyID = dbRdr.ToInt32("company_id");
+                udtVrpBaseCreditLimitHistory.Timestamp = dbRdr.ToDateTime("timestamp");
+                udtVrpBaseCreditLimitHistory.DailyCreditLimit = dbRdr.ToInt32("daily_credit_limit");
+                udtVrpBaseCreditLimitHistory.MonthlyCreditLimit = dbRdr.ToInt32("monthly_credit_limit");
+                udtVrpBaseCreditLimitHistory.YearlyCreditLimit = dbRdr.ToInt32("yearly_credit_limit");
+
+            }
+            catch (Exception ex)
+            {
+                Logger.LogEvent(mProjName, "DataMgrTools BuildVrpBaseCreditLimitHistory(): " + ex.Message, System.Diagnostics.EventLogEntryType.Error);
+            }
+            return udtVrpBaseCreditLimitHistory;
         }
     }
 }

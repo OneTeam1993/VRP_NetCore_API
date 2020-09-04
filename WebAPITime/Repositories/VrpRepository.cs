@@ -22,6 +22,7 @@ namespace WebAPITime.Repositories
         private static readonly IVrpDeliveryRepository repoVrpDelivery = new VrpDeliveryRepository();
         private static readonly IEventRepository repoEvent = new EventRepository();
         private static readonly IVrpLocationRequestsRepository repoVrpLocationRequest = new VrpLocationRequestsRepository();
+        private static readonly IVrpCreditLimitHistoryRepository repoVrpCreditLimitHistory = new VrpCreditLimitHistoryRepository();
         public long averageTime = 0;
         public long averageDistance = 0;
 
@@ -32,6 +33,7 @@ namespace WebAPITime.Repositories
             List<PickupDeliveryInfo> arrLocations = new List<PickupDeliveryInfo>();
             List<VrpSettingInfo> arrVrpSettings = new List<VrpSettingInfo>();
             int totalLocationRequest = 0;
+            int companyID = 0;
 
             try
             {
@@ -48,7 +50,9 @@ namespace WebAPITime.Repositories
                 }
                 else
                 {
-                    List<AreaCoveredInfo> arrAreaCovered = repoAreaCoveredInfo.GetAllByCompanyID(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID : 0);
+                    companyID = arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID : 0;
+
+                    List<AreaCoveredInfo> arrAreaCovered = repoAreaCoveredInfo.GetAllByCompanyID(companyID);
                     DataModel data = new DataModel(arrLocations, arrVrpSettings, arrAreaCovered);
                     totalLocationRequest = data.totalLocationRequests;
                     currVrp = VRPCalculation(routeNo, data);                    
@@ -66,7 +70,7 @@ namespace WebAPITime.Repositories
             {
                 try
                 {
-                    repoVrpLocationRequest.AddTotalRequest(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID.ToString() : "0", routeNo, totalLocationRequest);
+                    currVrp = AddTotalRequests(currVrp, companyID.ToString(), routeNo, totalLocationRequest);
                 }
                 catch (Exception ex)
                 {
@@ -1080,6 +1084,42 @@ namespace WebAPITime.Repositories
             return vrpInfo;
         }
 
+        public VrpInfo AddTotalRequests(VrpInfo currVrp, string companyID, string routeNo, int totalLocationRequest)
+        {
+            repoVrpLocationRequest.AddTotalRequest(companyID, routeNo, totalLocationRequest);
+
+            DateTime currentDateTime = DateTime.UtcNow;
+
+            List<VrpBaseCreditLimitHistory> arrBaseCreditLimit = repoVrpCreditLimitHistory.GetLatestBaseCreditLimit(companyID.ToString());
+            List<VrpCreditLimitHistory> arrDailyCreditLimit = repoVrpCreditLimitHistory.GetDailyHistory(companyID.ToString(), currentDateTime);
+            List<VrpCreditLimitHistory> arrMontlyCreditLimit = repoVrpCreditLimitHistory.GetMonthlyHistory(companyID.ToString(), currentDateTime);
+            List<VrpCreditLimitHistory> arrYearlyCreditLimit = repoVrpCreditLimitHistory.GetYearlyHistory(companyID.ToString(), currentDateTime);
+
+            if (arrBaseCreditLimit.Count > 0)
+            {
+                if (arrDailyCreditLimit.Count == 0)
+                {
+                    repoVrpCreditLimitHistory.InsertCreditLimitHistory(companyID.ToString(), currentDateTime, arrBaseCreditLimit[0].DailyCreditLimit, "daily");
+                }
+
+                if (arrMontlyCreditLimit.Count == 0)
+                {
+                    repoVrpCreditLimitHistory.InsertCreditLimitHistory(companyID.ToString(), currentDateTime, arrBaseCreditLimit[0].MonthlyCreditLimit, "monthly");
+                }
+
+                if (arrYearlyCreditLimit.Count == 0)
+                {
+                    repoVrpCreditLimitHistory.InsertCreditLimitHistory(companyID.ToString(), currentDateTime, arrBaseCreditLimit[0].YearlyCreditLimit, "yearly");
+                }
+            }
+            else
+            {
+                currVrp.ErrorMessage = String.Format("Base credit limit not found");
+            }
+
+            return currVrp;
+        }
+
         public VrpAvailableTimeInfo GetAvailableTimeForAdhocOrder(string routeNo, long driverID)
         {
             VrpSettingInfo vrpSettingInfo = repoVrpSettings.GetVrpSettingInfo(routeNo, driverID);
@@ -1175,6 +1215,7 @@ namespace WebAPITime.Repositories
             List<VrpInfo> arrVrp = new List<VrpInfo>();
             VrpInfo currVrp = new VrpInfo();
             List<VrpSettingInfo> arrVrpSettings = new List<VrpSettingInfo>();
+            int companyID = 0;
             int totalLocationRequest = 0;
 
             string[] pickupIDs;
@@ -1189,7 +1230,9 @@ namespace WebAPITime.Repositories
                 VrpSettingInfo vrpSettingInfo = repoVrpSettings.GetVrpSettingInfo(routeNo, driverID);
                 arrVrpSettings.Add(vrpSettingInfo);
                 List<RouteInfo> arrRouteInfo = repoRouteInfo.GetAllRouteInfoByRouteNoDriver(routeNo, driverID);
-                List<AreaCoveredInfo> arrAreaCovered = repoAreaCoveredInfo.GetAllByCompanyID(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID : 0);
+
+                companyID = arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID : 0;
+                List<AreaCoveredInfo> arrAreaCovered = repoAreaCoveredInfo.GetAllByCompanyID(companyID);
               
                 if (pickupID != null && pickupID.Trim() != "")
                 {
@@ -1292,7 +1335,7 @@ namespace WebAPITime.Repositories
             {
                 try
                 {
-                    repoVrpLocationRequest.AddTotalRequest(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID.ToString() : "0", routeNo, totalLocationRequest);
+                    currVrp = AddTotalRequests(currVrp, companyID.ToString(), routeNo, totalLocationRequest);
                 }
                 catch (Exception ex)
                 {

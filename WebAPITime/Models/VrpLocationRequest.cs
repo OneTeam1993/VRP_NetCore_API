@@ -17,7 +17,7 @@ namespace WebAPITime.Models
         public int Month { get; set; }
         public int Day { get; set; }
         public int CreditLimit { get; set; }
-        public int DailyCreditLimit { get; set; }
+        //public int DailyCreditLimit { get; set; }
         public int RequestCount { get; set; }
         public string Usage { get; set; }
     }

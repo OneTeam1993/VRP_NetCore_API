@@ -13,6 +13,7 @@ namespace WebAPITime.Repositories
         VrpAvailableTimeInfo GetAvailableTimeForAdhocOrder(string routeNo, long driverID);
         Task<IEnumerable<VrpInfo>> InsertAdHocOrderAsync(string routeNo, long driverID, string pickupID, string deliveryID, string companyName, string userName, string roleID);
         VrpInfo VRPCalculation(string routeNo, DataModel data, bool isCheckAdHocFeasibility = false, bool isInsertAdHoc = false, bool isRecalculateAfterDelete = false, List<RouteInfo> arrRouteInfo = null);
+        VrpInfo AddTotalRequests(VrpInfo currVrp, string companyID, string routeNo, int totalLocationRequest);
     }
 
     public interface IInitialLocationRepository
@@ -92,5 +93,14 @@ namespace WebAPITime.Repositories
         DriverReportResponse GetDriverReport(long driverID, DateTime recordDatetime);
         DriverReportResponse UpdateDriverReport(long driverID, DateTime worktimeStart, DateTime worktimeEnd);
         DriverReport GetDriverReportByDate(long driverID, DateTime recordDatetime);
+    }
+
+    public interface IVrpCreditLimitHistoryRepository
+    {
+        List<VrpBaseCreditLimitHistory> GetLatestBaseCreditLimit(string companyID);
+        List<VrpCreditLimitHistory> GetDailyHistory(string companyID, DateTime historyDateTime);
+        List<VrpCreditLimitHistory> GetMonthlyHistory(string companyID, DateTime historyDateTime);
+        List<VrpCreditLimitHistory> GetYearlyHistory(string companyID, DateTime historyDateTime);
+        bool InsertCreditLimitHistory(string companyID, DateTime historyDateTime, int creditLimit, string type);
     }
 }

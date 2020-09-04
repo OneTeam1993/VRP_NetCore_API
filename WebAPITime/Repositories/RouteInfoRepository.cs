@@ -937,7 +937,7 @@ namespace WebAPITime.Repositories
                         {
                             try
                             {
-                                repoVrpLocationRequest.AddTotalRequest(arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID.ToString() : "0", currRoute.RouteNo, totalLocationRequest);
+                                responseRouteInfoDeletion.RecalculatedRouteInfo = repoVrpInfo.AddTotalRequests(responseRouteInfoDeletion.RecalculatedRouteInfo, arrVrpSettings.Count > 0 ? arrVrpSettings[0].CompanyID.ToString() : "0", currRoute.RouteNo, totalLocationRequest);
                             }
                             catch (Exception ex)
                             {
