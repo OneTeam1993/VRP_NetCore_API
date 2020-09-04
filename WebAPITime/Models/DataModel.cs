@@ -749,7 +749,7 @@ namespace VrpModel
 
                             if(TaskList.Count == requestPerSecond)
                             {
-                                await Task.Delay(1000);
+                                await Task.Delay(2000);
                                 //await Task.WhenAll(TaskList.ToArray());
                                 ResultTaskList.AddRange(TaskList);
                                 TaskList = new List<Task<IRestResponse>>();
